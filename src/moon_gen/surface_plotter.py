@@ -28,10 +28,14 @@ class SurfacePlotter(QtWidgets.QFrame):
         self.grid = gl.GLGridItem()
         self.vw.addItem(self.grid)
 
+        self._surfaceData = (
+            np.arange(0, 2),
+            np.arange(0, 2),
+            np.zeros((2, 2))
+        )
+
         self.surf = gl.GLSurfacePlotItem(
-            x=np.arange(0, 2),
-            y=np.arange(0, 2),
-            z=np.zeros((2, 2)),
+            *self._surfaceData,
             shader='normalColor'
         )
         self.vw.addItem(self.surf)
@@ -51,6 +55,17 @@ class SurfacePlotter(QtWidgets.QFrame):
         self._gridVizAction.setShortcut(QtGui.QKeySequence('Ctrl+G'))
         self._gridVizAction.toggled.connect(self.grid.setVisible)
         self.addAction(self._gridVizAction)
+
+        self._sep = QtGui.QAction(self)
+        self._sep.setSeparator(True)
+        self.addAction(self._sep)
+
+        self._exportAction = QtGui.QAction('&Export surface', self)
+        self._exportAction.setIcon(self.style().standardIcon(
+            QtWidgets.QStyle.StandardPixmap.SP_ToolBarHorizontalExtensionButton))
+        self._exportAction.setShortcut(QtGui.QKeySequence('Ctrl+S'))
+        self._exportAction.triggered.connect(self.exportSurface)
+        self.addAction(self._exportAction)
 
         self.setContextMenuPolicy(
             QtCore.Qt.ContextMenuPolicy.ActionsContextMenu)
@@ -106,7 +121,8 @@ class SurfacePlotter(QtWidgets.QFrame):
             module = importlib.import_module(modulename)
 
         # try to retrieve a surface from the module
-        self.surf.setData(*module.surface())
+        self._surfaceData = module.surface()
+        self.surf.setData(*self._surfaceData)
         self._module = module
 
     def reloadSurface(self):
@@ -118,4 +134,34 @@ class SurfacePlotter(QtWidgets.QFrame):
         module = importlib.reload(self._module)
 
         # try to retrieve a surface from the module
-        self.surf.setData(*module.surface())
+        self._surfaceData = module.surface()
+        self.surf.setData(*self._surfaceData)
+
+    def exportSurface(self,  *, filename: str | None = None):
+        if filename is None:
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                self,
+                'save heightmap',
+                '.',
+                'PNG (*.png)'
+            )
+
+        if filename in ('', None):
+            return
+
+        if not filename.casefold().endswith('.png'):
+            filename += '.png'
+
+        x, y, z = self._surfaceData
+
+        zz: np.ndarray = (1000*(z - z.min())).astype(np.uint16)
+
+        img = QtGui.QImage(
+            zz.data,
+            z.shape[0],
+            z.shape[1],
+            z.shape[0]*2,  # 16 bits == 2 bytes
+            QtGui.QImage.Format.Format_Grayscale16
+        )
+
+        img.save(filename)
