@@ -159,26 +159,26 @@ class SurfacePlotter(QtWidgets.QFrame):
             x_range, _ = QtWidgets.QInputDialog.getInt(
                 self,
                 "X range", "please input width of heightmap image (in meters)",
-                20, 0, 1000
+                20, 0, 10000
             )
             y_range, _ = QtWidgets.QInputDialog.getInt(
                 self,
                 "Y range", "please input height of heightmap image (in meters)",
-                x_range, 0, 1000
+                x_range, 0, 10000
             )
 
             x = np.linspace(-x_range/2, x_range/2, w)
             y = np.linspace(-y_range/2, y_range/2, h)
             zz = np.frombuffer(ptr,
-                               dtype=np.uint16).reshape((h, w))
-            z = zz.astype(float)/1000
+                               dtype=np.uint16).reshape((h, w)).T
+            z = np.flipud(zz).astype(float)/1000
 
             self._surfaceData = x, y, z
             self.surf.setData(*self._surfaceData)
             self._module = None
 
         except Exception as e:
-            ermsg = f"failed to load heightmap image`{e}`"
+            ermsg = f"failed to load heightmap image ({e})"
             self._err_message.showMessage(ermsg, 'error')
             self._logger.error(ermsg)
             self._logger.exception(e)
@@ -215,9 +215,10 @@ class SurfacePlotter(QtWidgets.QFrame):
         _, _, z = self._surfaceData
 
         zz: np.ndarray = (1000*(z - z.min())).astype(np.uint16)
+        zz = np.flipud(zz).transpose()
 
         img = QtGui.QImage(
-            zz.data,
+            zz.data.tobytes(),
             z.shape[0],
             z.shape[1],
             z.shape[0]*2,  # 16 bits == 2 bytes

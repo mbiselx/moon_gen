@@ -10,7 +10,7 @@ def waste(z: np.ndarray, duration: float) -> np.ndarray:
     return 0.5*(z+gaussian_filter(z, sigma=5*duration))
 
 
-def surface(n=150) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def surface(n=250) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     nx = ny = n
     size = 10
     step = 2*size/n
