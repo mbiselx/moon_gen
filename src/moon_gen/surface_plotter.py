@@ -5,12 +5,16 @@ A widget for interactively plotting surfaces.
 
 import os
 import sys
+from typing import TYPE_CHECKING
 import importlib
 
 import numpy as np
 
 import pyqtgraph.opengl as gl
-from PyQt5 import QtCore, QtGui, QtWidgets
+if TYPE_CHECKING:
+    from PyQt6 import QtCore, QtGui, QtWidgets
+else:
+    from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 
 class SurfacePlotter(QtWidgets.QFrame):
@@ -34,19 +38,17 @@ class SurfacePlotter(QtWidgets.QFrame):
 
         self.setAcceptDrops(True)
 
-        self._reloadAction = QtWidgets.QAction('&Regenerate surface', self)
+        self._reloadAction = QtGui.QAction('&Regenerate surface', self)
         self._reloadAction.setIcon(self.style().standardIcon(
             QtWidgets.QStyle.StandardPixmap.SP_BrowserReload))
-        self._reloadAction.setShortcut(
-            QtCore.Qt.Modifier.CTRL + QtCore.Qt.Key.Key_R)
+        self._reloadAction.setShortcut(QtGui.QKeySequence('Ctrl+R'))
         self._reloadAction.triggered.connect(self.reloadSurface)
         self.addAction(self._reloadAction)
 
-        self._gridVizAction = QtWidgets.QAction('&Toggle grid on/off', self)
+        self._gridVizAction = QtGui.QAction('&Toggle grid on/off', self)
         self._gridVizAction.setCheckable(True)
         self._gridVizAction.setChecked(self.grid.visible())
-        self._gridVizAction.setShortcut(
-            QtCore.Qt.Modifier.CTRL + QtCore.Qt.Key.Key_G)
+        self._gridVizAction.setShortcut(QtGui.QKeySequence('Ctrl+G'))
         self._gridVizAction.toggled.connect(self.grid.setVisible)
         self.addAction(self._gridVizAction)
 
