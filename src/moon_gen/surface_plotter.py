@@ -5,8 +5,9 @@ A widget for interactively plotting surfaces.
 
 import os
 import sys
-from typing import TYPE_CHECKING
+import logging
 import importlib
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -21,6 +22,7 @@ class SurfacePlotter(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._logger = logging.getLogger(self.__class__.__name__)
         self._module = None
 
         self.vw = gl.GLViewWidget(self)
@@ -46,7 +48,7 @@ class SurfacePlotter(QtWidgets.QFrame):
         self._reloadAction.setIcon(self.style().standardIcon(
             QtWidgets.QStyle.StandardPixmap.SP_BrowserReload))
         self._reloadAction.setShortcut(QtGui.QKeySequence('Ctrl+R'))
-        self._reloadAction.triggered.connect(self.reloadSurface)
+        self._reloadAction.triggered.connect(self.reloadSurfaceModule)
         self.addAction(self._reloadAction)
 
         self._gridVizAction = QtGui.QAction('&Toggle grid on/off', self)
@@ -74,6 +76,9 @@ class SurfacePlotter(QtWidgets.QFrame):
         self.layout().addWidget(self.vw)
         self.layout().setContentsMargins(*4*[0])
 
+        # error message
+        self._err_message = QtWidgets.QErrorMessage(self)
+
     def minimumSizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(100, 100)
 
@@ -92,10 +97,9 @@ class SurfacePlotter(QtWidgets.QFrame):
         '''accept any .py files dragged into this widget'''
         if a0.mimeData().hasText():
             txt = a0.mimeData().text()
-            if txt.startswith('file:'):
-                txt = txt[8:]
-            print(txt)
-            if os.path.isfile(txt) and txt.endswith('.py'):
+            self._logger.info(txt)
+
+            if os.path.isfile(txt.removeprefix('file:///')):
                 return a0.accept()
 
         return a0.ignore()
@@ -104,10 +108,21 @@ class SurfacePlotter(QtWidgets.QFrame):
         '''
         Run the files dropped onto this widget and plot the resulting surface.
         '''
-        filename = a0.mimeData().text()
-        self.plotSurfaceFromFile(filename)
+        filename = a0.mimeData().text().removeprefix('file:///')
 
-    def plotSurfaceFromFile(self, filename: str):
+        if filename.casefold().endswith('.py'):
+            self.plotSurfaceFromModule(filename)
+            a0.accept()
+        elif filename.casefold().endswith(('.png', '.jpg', '.jepg', '.tif', '.tiff')):
+            self.plotSurfaceFromHeightmap(filename)
+            a0.accept()
+        else:
+            ermsg = f"unsupported filetype `{filename.rsplit('.', 1)[-1]}`"
+            self._err_message.showMessage(ermsg, 'warning')
+            self._logger.warning(ermsg)
+            a0.ignore()
+
+    def plotSurfaceFromModule(self, filename: str):
         '''plot the surface defined in a python file'''
         modulepath = os.path.dirname(filename)
         modulename = os.path.basename(filename)[:-3]
@@ -121,13 +136,57 @@ class SurfacePlotter(QtWidgets.QFrame):
             module = importlib.import_module(modulename)
 
         # try to retrieve a surface from the module
-        self._surfaceData = module.surface()
-        self.surf.setData(*self._surfaceData)
-        self._module = module
+        try:
+            self._surfaceData = module.surface()
+            self.surf.setData(*self._surfaceData)
+            self._module = module
+        except Exception as e:
+            ermsg = f"failed to plot surface from module ({e})"
+            self._err_message.showMessage(ermsg, 'error')
+            self._logger.error(ermsg)
+            self._logger.exception(e)
 
-    def reloadSurface(self):
+    def plotSurfaceFromHeightmap(self, filename: str):
+        '''plot the surface defined in a heightmap image file'''
+        try:
+            surface_image = QtGui.QImage(filename)
+            surface_image.convertTo(QtGui.QImage.Format.Format_Grayscale16)
+            w = surface_image.width()
+            h = surface_image.height()
+            ptr = surface_image.constBits()
+            ptr.setsize(w*h*2)
+
+            x_range, _ = QtWidgets.QInputDialog.getInt(
+                self,
+                "X range", "please input width of heightmap image (in meters)",
+                20, 0, 1000
+            )
+            y_range, _ = QtWidgets.QInputDialog.getInt(
+                self,
+                "Y range", "please input height of heightmap image (in meters)",
+                x_range, 0, 1000
+            )
+
+            x = np.linspace(-x_range/2, x_range/2, w)
+            y = np.linspace(-y_range/2, y_range/2, h)
+            zz = np.frombuffer(ptr,
+                               dtype=np.uint16).reshape((h, w))
+            z = zz.astype(float)/1000
+
+            self._surfaceData = x, y, z
+            self.surf.setData(*self._surfaceData)
+            self._module = None
+
+        except Exception as e:
+            ermsg = f"failed to load heightmap image`{e}`"
+            self._err_message.showMessage(ermsg, 'error')
+            self._logger.error(ermsg)
+            self._logger.exception(e)
+
+    def reloadSurfaceModule(self):
         '''reload the surface defined in the current python file'''
         if self._module is None:
+            self._logger.warning("no module to reload")
             return
 
         # try to reload the module if it exists
@@ -137,7 +196,8 @@ class SurfacePlotter(QtWidgets.QFrame):
         self._surfaceData = module.surface()
         self.surf.setData(*self._surfaceData)
 
-    def exportSurface(self,  *, filename: str | None = None):
+    def exportSurface(self, *, filename: str | None = None):
+        '''export a surface to a PNG image file'''
         if filename is None:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 self,
@@ -152,7 +212,7 @@ class SurfacePlotter(QtWidgets.QFrame):
         if not filename.casefold().endswith('.png'):
             filename += '.png'
 
-        x, y, z = self._surfaceData
+        _, _, z = self._surfaceData
 
         zz: np.ndarray = (1000*(z - z.min())).astype(np.uint16)
 
