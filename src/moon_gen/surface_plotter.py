@@ -48,7 +48,7 @@ class SurfacePlotter(QtWidgets.QFrame):
         self._reloadAction.setIcon(self.style().standardIcon(
             QtWidgets.QStyle.StandardPixmap.SP_BrowserReload))
         self._reloadAction.setShortcut(QtGui.QKeySequence('Ctrl+R'))
-        self._reloadAction.triggered.connect(self.reloadSurfaceModule)
+        self._reloadAction.triggered.connect(self.reloadSurface)
         self.addAction(self._reloadAction)
 
         self._gridVizAction = QtGui.QAction('&Toggle grid on/off', self)
@@ -150,28 +150,41 @@ class SurfacePlotter(QtWidgets.QFrame):
         '''plot the surface defined in a heightmap image file'''
         try:
             surface_image = QtGui.QImage(filename)
-            surface_image.convertTo(QtGui.QImage.Format.Format_Grayscale16)
+            surface_image.convertTo(
+                QtGui.QImage.Format.Format_Grayscale8,
+                QtCore.Qt.ImageConversionFlag.MonoOnly
+            )
             w = surface_image.width()
             h = surface_image.height()
             ptr = surface_image.constBits()
-            ptr.setsize(w*h*2)
+            ptr.setsize(surface_image.sizeInBytes())
 
-            x_range, _ = QtWidgets.QInputDialog.getInt(
+            # QImage has some end-of-line padding, so that each line is word-aligned
+            padding = surface_image.sizeInBytes()//w - h
+
+            x_range, _ = QtWidgets.QInputDialog.getDouble(
                 self,
                 "X range", "please input width of heightmap image (in meters)",
                 20, 0, 10000
             )
-            y_range, _ = QtWidgets.QInputDialog.getInt(
+            y_range, _ = QtWidgets.QInputDialog.getDouble(
                 self,
                 "Y range", "please input height of heightmap image (in meters)",
-                x_range, 0, 10000
+                x_range/w*h, 0, 10000
+            )
+            z_range, _ = QtWidgets.QInputDialog.getDouble(
+                self,
+                "Z range", "please input depth of heightmap image (in meters)",
+                1, 0, 10000
             )
 
             x = np.linspace(-x_range/2, x_range/2, w)
             y = np.linspace(-y_range/2, y_range/2, h)
-            zz = np.frombuffer(ptr,
-                               dtype=np.uint16).reshape((h, w)).T
-            z = np.flipud(zz).astype(float)/1000
+
+            zz = np.asarray(ptr, dtype=np.uint8).reshape((h, w+padding))
+            if padding:
+                zz = zz[:, :-padding]
+            z = np.flipud(zz.T).astype(float)*(z_range/(2**8-1))
 
             self._surfaceData = x, y, z
             self.surf.setData(*self._surfaceData)
@@ -183,17 +196,50 @@ class SurfacePlotter(QtWidgets.QFrame):
             self._logger.error(ermsg)
             self._logger.exception(e)
 
+    def reloadSurface(self):
+        if self._module is not None:
+            self.reloadSurfaceModule()
+        elif self._surfaceData is not None:
+            self.reloadSurfaceImage()
+        else:
+            ermsg = f"No surface to reload"
+            self._err_message.showMessage(ermsg, 'warning')
+            self._logger.warn(ermsg)
+
     def reloadSurfaceModule(self):
         '''reload the surface defined in the current python file'''
-        if self._module is None:
-            self._logger.warning("no module to reload")
-            return
 
         # try to reload the module if it exists
         module = importlib.reload(self._module)
 
         # try to retrieve a surface from the module
         self._surfaceData = module.surface()
+        self.surf.setData(*self._surfaceData)
+
+    def reloadSurfaceImage(self):
+        x, y, z = self._surfaceData
+
+        x_range, _ = QtWidgets.QInputDialog.getDouble(
+            self,
+            "X range", "please input width of heightmap image (in meters)",
+            x.ptp(), 0, 10000
+        )
+        y_range, _ = QtWidgets.QInputDialog.getDouble(
+            self,
+            "Y range", "please input height of heightmap image (in meters)",
+            y.ptp(), 0, 10000
+        )
+        z_range, _ = QtWidgets.QInputDialog.getDouble(
+            self,
+            "Z range", "please input depth of heightmap image (in meters)",
+            z.ptp(), 0, 10000
+        )
+
+        x = np.linspace(-x_range/2, x_range/2, len(x))
+        y = np.linspace(-y_range/2, y_range/2, len(y))
+        z *= (z_range/z.ptp())
+
+        self._surfaceData = x, y, z
         self.surf.setData(*self._surfaceData)
 
     def exportSurface(self, *, filename: str | None = None):
@@ -214,15 +260,18 @@ class SurfacePlotter(QtWidgets.QFrame):
 
         _, _, z = self._surfaceData
 
-        zz: np.ndarray = (1000*(z - z.min())).astype(np.uint16)
+        # zz: np.ndarray = (1000*(z - z.min())).astype(np.uint16)
+        zz: np.ndarray = ((z - z.min())*(255/z.ptp())).astype(np.uint8)
         zz = np.flipud(zz).transpose()
 
         img = QtGui.QImage(
             zz.data.tobytes(),
             z.shape[0],
             z.shape[1],
-            z.shape[0]*2,  # 16 bits == 2 bytes
-            QtGui.QImage.Format.Format_Grayscale16
+            # z.shape[0]*2,  # 16 bits == 2 bytes
+            # QtGui.QImage.Format.Format_Grayscale16
+            z.shape[0],  # 8 bits == 1 byte
+            QtGui.QImage.Format.Format_Grayscale8
         )
 
         img.save(filename)
