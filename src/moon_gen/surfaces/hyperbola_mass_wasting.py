@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from moon_gen.surfaces.hyperbola_generator import make_crater, make_ejecta
-from moon_gen.surfaces.hyperbola_multiple import scale_probability
+from moon_gen.surfaces.hyperbola_parametric import make_crater, make_ejecta
+from moon_gen.surfaces.hyperbola_multiple import radius_probability
 
 
 def waste(z: np.ndarray, duration: float) -> np.ndarray:
@@ -10,7 +10,7 @@ def waste(z: np.ndarray, duration: float) -> np.ndarray:
     return 0.5*(z+gaussian_filter(z, sigma=5*duration))
 
 
-def surface(n=250) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def surface(n=500) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     nx = ny = n
     size = 10
     step = 2*size/n
@@ -27,20 +27,23 @@ def surface(n=250) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
         # center
         center = tuple(2*size*(np.random.random((2,))-.5))
         # scale
-        scale = scale_probability()
+        radius = radius_probability()
         # elevation
         elevation = z[np.abs(x-center[0]) < step,
                       np.abs(y-center[1]) < step].mean()
 
         # apply ejecta to the ground
-        ejecta = make_ejecta(x, y, center, scale, elevation)
+        ejecta = make_ejecta(x, y, center, radius, elevation)
         z = z + ejecta
 
         # dig the creater
-        crater = make_crater(x, y, center, scale, elevation)
+        crater = make_crater(x, y, center, radius, elevation)
         z = np.minimum(z, crater)
 
         # apply mass wasting
         z = waste(z, np.random.random()/5)
+
+    # finally, apply micro-meteorite impacts
+    z += np.random.normal(scale=0.001, size=z.shape)
 
     return x, y, z
