@@ -1,7 +1,14 @@
 import numpy as np
 
-DDR = 0.23
-HDR = 0.03
+# The following two ratio values are taken from
+# LUNAR SURFACE MODELS, Marshall Space Center, p 16
+# https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
+
+DDR = 0.23  # fresh crater : 0.23 - 0.25
+'''depth-to-diameter ratio'''
+# HDR = 0.06  # fresh crater : 0.022 - 0.06
+HDR = 0.075  # for aesthetics -- less looks bad ???
+'''height-to-diameter ratio'''
 
 
 def make_crater(x: np.ndarray, y: np.ndarray, center: tuple[float, float], radius: float = 1, elevation: float = 0) -> np.ndarray:
@@ -10,16 +17,17 @@ def make_crater(x: np.ndarray, y: np.ndarray, center: tuple[float, float], radiu
                 (y-center[1]).reshape((1, len(y)))**2)
     h = 2*radius*HDR
     d = 2*radius*DDR
-    crater = d * r_square / radius ** 2 + (h-d)
+    crater = d * r_square / radius ** 2 + (elevation + h-d)
     return crater
 
 
-def make_ejecta(x: np.ndarray, y: np.ndarray, center: tuple[float, float], scale: float, elevation: float = 0) -> np.ndarray:
+def make_ejecta(x: np.ndarray, y: np.ndarray, center: tuple[float, float], radius: float = 1, elevation: float = 0) -> np.ndarray:
     '''return the elevation corresponding to the ejecta from a single crater'''
-    z = ((x-center[0]).reshape((len(x), 1))**2 +
-         (y-center[1]).reshape((1, len(y)))**2) / scale**3
-    ejecta_weight = np.exp(10/np.maximum(z, 10/scale)) - 1
-    return np.random.normal(scale=.05/scale*ejecta_weight) + ejecta_weight
+    r_square = np.maximum(((x-center[0]).reshape((len(x), 1))**2 +
+                           (y-center[1]).reshape((1, len(y)))**2), radius**2)
+    ejecta_weight = np.exp(np.log(2)*radius**2/r_square) - 1
+    ejecta_base = 2*radius*HDR*ejecta_weight
+    return ejecta_base + np.random.normal(scale=0.1*ejecta_base)
 
 
 def surface(n=150) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -40,9 +48,9 @@ def surface(n=150) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
     # ground = .05*np.random.random((nx, ny))
 
     # apply ejecta to the ground
-    # ejecta = make_ejecta(x, y, center, scale)
-    # z = ground + ejecta
-    z = ground
+    ejecta = make_ejecta(x, y, center, radius)
+    z = ground + ejecta
+    # z = ground
 
     # dig the creater
     crater = make_crater(x, y, center, radius)

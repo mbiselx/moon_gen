@@ -4,7 +4,7 @@ import argparse
 
 import pyqtgraph as pg
 
-from .surface_plotter import SurfacePlotter
+from moon_gen.surface_plotter import SurfacePlotter
 
 
 parser = argparse.ArgumentParser()
