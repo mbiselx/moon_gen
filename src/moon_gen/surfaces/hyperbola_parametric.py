@@ -11,7 +11,7 @@ HDR = 0.075  # for aesthetics -- less looks bad ???
 '''height-to-diameter ratio'''
 
 
-def make_crater(x: np.ndarray, y: np.ndarray, center: tuple[float, float], radius: float = 1, elevation: float = 0) -> np.ndarray:
+def make_excavation(x: np.ndarray, y: np.ndarray, center: tuple[float, float], radius: float = 1, elevation: float = 0) -> np.ndarray:
     '''return the hyperbola corresponding to the excavation of a single crater'''
     r_square = ((x-center[0]).reshape((len(x), 1))**2 +
                 (y-center[1]).reshape((1, len(y)))**2)
@@ -53,7 +53,7 @@ def surface(n=150) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
     # z = ground
 
     # dig the creater
-    crater = make_crater(x, y, center, radius)
+    crater = make_excavation(x, y, center, radius)
     z = np.minimum(z, crater)
     # z = crater
 

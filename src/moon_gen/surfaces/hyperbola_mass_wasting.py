@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from moon_gen.surfaces.hyperbola_parametric import make_crater, make_ejecta
-from moon_gen.surfaces.hyperbola_multiple import radius_probability
+from moon_gen.surfaces.hyperbola_multiple import radius_probability, make_crater
 
 
 def waste(z: np.ndarray, duration: float) -> np.ndarray:
@@ -10,10 +9,9 @@ def waste(z: np.ndarray, duration: float) -> np.ndarray:
     return 0.5*(z+gaussian_filter(z, sigma=5*duration))
 
 
-def surface(n=500) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def surface(n=513) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     nx = ny = n
     size = 10
-    step = 2*size/n
 
     # generate the initial flat terrain
     x = np.linspace(-size, size, nx)
@@ -24,22 +22,8 @@ def surface(n=500) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
     print(f"generating {nb_craters} craters")
 
     for i in range(nb_craters):
-        # center
-        center = tuple(2*size*(np.random.random((2,))-.5))
-        # scale
-        radius = radius_probability()
-        # elevation
-        elevation = z[np.abs(x-center[0]) < step,
-                      np.abs(y-center[1]) < step].mean()
-
-        # apply ejecta to the ground
-        ejecta = make_ejecta(x, y, center, radius, elevation)
-        z = z + ejecta
-
-        # dig the creater
-        crater = make_crater(x, y, center, radius, elevation)
-        z = np.minimum(z, crater)
-
+        # make the crater
+        z = make_crater(x, y, z)
         # apply mass wasting
         z = waste(z, np.random.random()/5)
 

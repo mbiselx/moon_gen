@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-from moon_gen.surfaces.hyperbola_parametric import make_crater, make_ejecta
+from moon_gen.surfaces.hyperbola_parametric import make_excavation, make_ejecta
 
 
 def radius_probability(*, minimum: float = .1, maximum: float = 50) -> float:
@@ -21,6 +21,28 @@ def radius_probability(*, minimum: float = .1, maximum: float = 50) -> float:
     return min(max(minimum, math.sqrt((1-x)/(50*x))), maximum)
 
 
+def make_crater(x: int | np.ndarray, y: int | np.ndarray, z: np.ndarray) -> np.ndarray:
+    step = x.ptp()/len(x)
+    # center
+    center = (x.ptp() * np.random.random() + x.min(),
+              y.ptp() * np.random.random() + y.min())
+    # scale
+    radius = radius_probability()
+    # elevation
+    elevation = z[np.abs(x-center[0]) < step,
+                  np.abs(y-center[1]) < step].mean()
+
+    # apply ejecta to the ground
+    ejecta = make_ejecta(x, y, center, radius, elevation)
+    z = z + ejecta
+
+    # dig the creater
+    crater = make_excavation(x, y, center, radius, elevation)
+    z = np.minimum(z, crater)
+
+    return z
+
+
 def surface(n=150) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     nx = ny = n
     size = 10
@@ -35,20 +57,6 @@ def surface(n=150) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
     print(f"generating {nb_craters} craters")
 
     for i in range(nb_craters):
-        # center
-        center = tuple(2*size*(np.random.random((2,))-.5))
-        # scale
-        radius = radius_probability()
-        # elevation
-        elevation = z[np.abs(x-center[0]) < step,
-                      np.abs(y-center[1]) < step].mean()
-
-        # apply ejecta to the ground
-        ejecta = make_ejecta(x, y, center, radius, elevation)
-        z = z + ejecta
-
-        # dig the creater
-        crater = make_crater(x, y, center, radius, elevation)
-        z = np.minimum(z, crater)
+        z = make_crater(x, y, z)
 
     return x, y, z
