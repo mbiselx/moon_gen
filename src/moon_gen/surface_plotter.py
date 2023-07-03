@@ -38,7 +38,7 @@ class SurfacePlotter(QtWidgets.QFrame):
 
         self.surf = gl.GLSurfacePlotItem(
             *self._surfaceData,
-            shader='normalColor'
+            shader='shaded'
         )
         self.vw.addItem(self.surf)
 
@@ -57,6 +57,12 @@ class SurfacePlotter(QtWidgets.QFrame):
         self._gridVizAction.setShortcut(QtGui.QKeySequence('Ctrl+G'))
         self._gridVizAction.toggled.connect(self.grid.setVisible)
         self.addAction(self._gridVizAction)
+
+        self._shaderAction = QtGui.QAction('&Shader on/off', self)
+        self._shaderAction.setCheckable(True)
+        self._shaderAction.setChecked(self.surf.shader().name == 'normalColor')
+        self._shaderAction.toggled.connect(self.toggleShader)
+        self.addAction(self._shaderAction)
 
         self._sep = QtGui.QAction(self)
         self._sep.setSeparator(True)
@@ -93,6 +99,9 @@ class SurfacePlotter(QtWidgets.QFrame):
     def __exit__(self, *args):
         pass
 
+    def toggleShader(self, active: bool):
+        self.surf.setShader('normalColor' if active else 'shaded')
+
     def dragEnterEvent(self, a0: QtGui.QDragEnterEvent) -> None:
         '''accept any .py files dragged into this widget'''
         if a0.mimeData().hasText():
@@ -109,18 +118,18 @@ class SurfacePlotter(QtWidgets.QFrame):
         Run the files dropped onto this widget and plot the resulting surface.
         '''
         filename = a0.mimeData().text().removeprefix('file:///')
+        self.plotSurfaceFromFile(filename)
+
+    def plotSurfaceFromFile(self, filename: str):
 
         if filename.casefold().endswith('.py'):
             self.plotSurfaceFromModule(filename)
-            a0.accept()
         elif filename.casefold().endswith(('.png', '.jpg', '.jepg', '.tif', '.tiff')):
             self.plotSurfaceFromHeightmap(filename)
-            a0.accept()
         else:
             ermsg = f"unsupported filetype `{filename.rsplit('.', 1)[-1]}`"
             self._err_message.showMessage(ermsg, 'warning')
             self._logger.warning(ermsg)
-            a0.ignore()
 
     def plotSurfaceFromModule(self, filename: str):
         '''plot the surface defined in a python file'''
