@@ -3,14 +3,19 @@ import numpy as np
 
 
 def cash(x: int | np.ndarray, y: int | np.ndarray, seed: int | np.ndarray = 0):
-    # cash stands for chaos hash :D
+    '''cash stands for chaos hash :D'''
     h = seed + x*374761393 + y*668265263  # all constants are prime
     h = (h ^ (h >> 13))*1274126177
     return h ^ (h >> 16)
 
 
 def interpolate(a0: float, a1: float, w):
-    return (a1 - a0) * w + a0
+    # return (a1 - a0) * w + a0
+    if w > 1:
+        return a1
+    if w < 0:
+        return a0
+    return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0
 
 
 def random_gradient(ix: int, iy: int, seed: int = 0):
