@@ -6,9 +6,9 @@ The purpose is to aid in the development of algorithms to generate nice-looking 
 
 ## Preview
 
-| ![surface 1](img/Screenshot(1).png) | ![surface 2](img/Screenshot(2).png) |
-| --- | --- |
-| a somewhat older surface, with randomly placed craters | a surface with a fresh crater |
+| ![surface 1](img/Screenshot(1).png) | ![surface 2](img/Screenshot(2).png) | ![surface 3](img/Screenshot(3).png) |
+| --- | --- | --- |
+| a somewhat older surface, with randomly placed craters | a surface with a fresh crater | a surface with a randomly generated height map |
 
 
 ## Running
@@ -25,6 +25,7 @@ This project is still a work in progress. As such, there are a number of feature
 - [ ] better crater and ejecta modelling (more scientifically accurate shapes)
 - [ ] better mass wasting (using a dffusion equation, rather than smoothing)
 - [ ] use real DEMs for base terrain
-- [ ] non-crater procedural base terrain
+- [x] non-crater procedural base terrain
 - [ ] generate albedo maps based on crater placement
+- [x] export generated surfaces for use in Gazebo
 - [ ] export generated surfaces to a standard DEM format, for use in Gazebo
