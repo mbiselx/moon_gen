@@ -1,7 +1,7 @@
 import numpy as np
 
 from moon_gen.surfaces.hyperbola_mass_wasting import make_crater, waste
-from moon_gen.surfaces.perlin_mulitscale import perlin_multiscale_grid
+from moon_gen.surfaces.perlin_mulitscale import perlin_multiscale_grid, surface_psd_rough
 
 
 def surface(n=513) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -12,16 +12,15 @@ def surface(n=513) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
     y = np.linspace(-ay/2, ay/2, ny)
 
     print("generating background")
-    z = perlin_multiscale_grid(x+cx, y+cy, [4, 2, 1, .5, .25, .125, 0, 0])
+    z = perlin_multiscale_grid(x+cx, y+cy, psd=surface_psd_rough, octaves=10)
 
     nb_craters = 40 + np.random.random_integers(10, 50)
     print(f"generating {nb_craters} craters")
-    for i in range(nb_craters//2):
-        z = make_crater(x, y, z)
-    z = waste(z, 0.1 + np.random.random()/5)
-    for i in range(nb_craters//2):
-        z = make_crater(x, y, z)
-    z = waste(z, np.random.random()/5)
+
+    for i in reversed(range(4)):
+        for _ in range(nb_craters//4):
+            z = make_crater(x, y, z)
+        z = waste(z, i/10 + np.random.random()/5)
 
     print("done")
 
