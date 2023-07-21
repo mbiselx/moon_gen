@@ -1,21 +1,35 @@
 import math
+import typing
+
 import numpy as np
 
 
-def cash(x: int | np.ndarray, y: int | np.ndarray, seed: int | np.ndarray = 0):
-    '''cash stands for chaos hash :D'''
-    h = seed + x*374761393 + y*668265263  # all constants are prime
+def cash(x_coord: int | np.ndarray, y_coord: int | np.ndarray, seed: int | np.ndarray = 0):
+    '''
+    cash stands for chaos hash :D
+
+    It's not really a hash, but it's perfect for what i'm doing
+    https://stackoverflow.com/a/37221804/21688300
+    '''
+    h = seed + x_coord*374761393 + y_coord*668265263  # all constants are prime
     h = (h ^ (h >> 13))*1274126177
     return h ^ (h >> 16)
 
 
-def interpolate(a0: float | np.ndarray, a1: float | np.ndarray, w: float | np.ndarray) -> float | np.ndarray:
+@typing.overload
+def interpolate(low: float, high: float, w: float) -> float:
+    ...
+
+
+@typing.overload
+def interpolate(low: np.ndarray, high: np.ndarray, w: np.ndarray) -> np.ndarray:
+    ...
+
+
+def interpolate(low: float | np.ndarray, high: float | np.ndarray, w: float | np.ndarray):
+    '''interpolate a point `w` between `low` and `high`'''
     # return (a1 - a0) * w + a0
-    # if w > 1:
-    #     return a1
-    # if w < 0:
-    #     return a0
-    return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0
+    return (high - low) * (3.0 - w * 2.0) * w * w + low
 
 
 def random_gradient(ix: int, iy: int, seed: int = 0):

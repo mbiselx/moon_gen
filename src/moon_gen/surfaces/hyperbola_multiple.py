@@ -21,7 +21,7 @@ def radius_probability(*, minimum: float = .1, maximum: float = 50) -> float:
     return min(max(minimum, math.sqrt((1-x)/(50*x))), maximum)
 
 
-def make_crater(x: int | np.ndarray, y: int | np.ndarray, z: np.ndarray) -> np.ndarray:
+def make_crater(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     step = x.ptp()/len(x)
     # center
     center = (x.ptp() * np.random.random() + x.min(),

@@ -28,7 +28,7 @@ def surface_psd_rough(f: float) -> float:
     return 4 / (8e4 * f**3 + 1) + 1/(3e3 * f**2 + 50)
 
 
-def perlin_multiscale_grid(x: np.ndarray, y: np.ndarray, octaves: int = 8, psd: Callable[[float], float] = surface_psd_rough, starting_frequency: float = None) -> np.ndarray:
+def perlin_multiscale_grid(x: np.ndarray, y: np.ndarray, octaves: int = 8, psd: Callable[[float], float] = surface_psd_rough, starting_frequency: float | None = None) -> np.ndarray:
     '''
     generate multiscale perlin noise with a given power spectral density 
 
@@ -55,7 +55,7 @@ def perlin_multiscale_grid(x: np.ndarray, y: np.ndarray, octaves: int = 8, psd: 
 
         grids.append(weight * perlin_grid(xx, yy))
 
-    return sum(grids)
+    return sum(grids, start=np.zeros((len(x), len(x))))
 
 
 def surface(n=513) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
