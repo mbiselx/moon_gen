@@ -53,7 +53,7 @@ def surface(n=150) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
     y = np.linspace(-size, size, ny)
     z = .005*np.random.random((nx, ny))
 
-    nb_craters = np.random.random_integers(50, 100)
+    nb_craters = np.random.randint(50, 100)
     print(f"generating {nb_craters} craters")
 
     for i in range(nb_craters):
