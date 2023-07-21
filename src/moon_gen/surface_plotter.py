@@ -217,6 +217,8 @@ class SurfacePlotter(QtWidgets.QFrame):
 
     def reloadSurfaceModule(self):
         '''reload the surface defined in the current python file'''
+        if self._module is None:
+            return
 
         # try to reload the module if it exists
         module = importlib.reload(self._module)
