@@ -6,8 +6,6 @@ name: Python package
 on:
   push:
     branches: [ '*' ]
-  pull_request:
-    branches: [ '*' ]
 
 jobs:
   build:
@@ -39,7 +37,7 @@ jobs:
     - name: Check formatting with autopep8
       run: | 
         # consider formatting divergences as errors 
-        autopep8 --recursive --diff .
+        autopep8 --recursive --diff --exit-code .
     - name: Test with unittest
       run: |
         python -m unittest
