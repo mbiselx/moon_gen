@@ -211,12 +211,14 @@ class SurfacePlotter(QtWidgets.QFrame):
         elif self._surfaceData is not None:
             self.reloadSurfaceImage()
         else:
-            ermsg = f"No surface to reload"
+            ermsg = "No surface to reload"
             self._err_message.showMessage(ermsg, 'warning')
             self._logger.warn(ermsg)
 
     def reloadSurfaceModule(self):
         '''reload the surface defined in the current python file'''
+        if self._module is None:
+            return
 
         # try to reload the module if it exists
         module = importlib.reload(self._module)

@@ -1,5 +1,5 @@
 import math
-from typing import Iterable, Callable
+from typing import Callable
 
 import numpy as np
 
@@ -12,7 +12,7 @@ def surface_psd_nominal(f: float) -> float:
     roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 20
     https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
 
-    (meters**2/cycles/meter) -> (cycles/meter) : 
+    (meters**2/cycles/meter) -> (cycles/meter)
     '''
     return 3 / (2e5 * f**3.35 + 1)
 
@@ -23,19 +23,24 @@ def surface_psd_rough(f: float) -> float:
     roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 20
     https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
 
-    (meters**2/cycles/meter) -> (cycles/meter) : 
+    (meters**2/cycles/meter) -> (cycles/meter)
     '''
     return 4 / (8e4 * f**3 + 1) + 1/(3e3 * f**2 + 50)
 
 
-def perlin_multiscale_grid(x: np.ndarray, y: np.ndarray, octaves: int = 8, psd: Callable[[float], float] = surface_psd_rough, starting_frequency: float = None) -> np.ndarray:
+def perlin_multiscale_grid(
+        x: np.ndarray,
+        y: np.ndarray,
+        octaves: int = 8,
+        psd: Callable[[float], float] = surface_psd_rough
+) -> np.ndarray:
     '''
-    generate multiscale perlin noise with a given power spectral density 
+    generate multiscale perlin noise with a given power spectral density
 
-    Arguments : 
-        x   :   x coordinates 
+    Arguments :
+        x   :   x coordinates
         y   :   y coordinates
-        psd :   desired power spectral density -- starting with the lowest (nonzero) frequency 
+        psd :   desired power spectral density -- starting with the lowest (nonzero) frequency
     '''
     x0, y0 = x.min(), y.min()
     rx, ry = x.ptp(), y.ptp()
@@ -55,7 +60,7 @@ def perlin_multiscale_grid(x: np.ndarray, y: np.ndarray, octaves: int = 8, psd: 
 
         grids.append(weight * perlin_grid(xx, yy))
 
-    return sum(grids)
+    return sum(grids, start=np.zeros((len(x), len(x))))
 
 
 def surface(n=513) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:

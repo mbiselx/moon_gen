@@ -14,7 +14,7 @@ def surface(n=513) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
     print("generating background")
     z = perlin_multiscale_grid(x+cx, y+cy, psd=surface_psd_rough, octaves=10)
 
-    nb_craters = 40 + np.random.random_integers(10, 50)
+    nb_craters = 40 + np.random.randint(10, 50)
     print(f"generating {nb_craters} craters")
 
     for i in reversed(range(4)):

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from moon_gen.surfaces.hyperbola_multiple import radius_probability, make_crater
+from moon_gen.surfaces.hyperbola_multiple import make_crater
 
 
 def waste(z: np.ndarray, duration: float) -> np.ndarray:
@@ -18,7 +18,7 @@ def surface(n=513) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarr
     y = np.linspace(-size, size, ny)
     z = np.random.normal(scale=0.05, size=(nx, ny))
 
-    nb_craters = np.random.random_integers(10, 50)
+    nb_craters = np.random.randint(10, 50)
     print(f"generating {nb_craters} craters")
 
     for i in range(nb_craters):

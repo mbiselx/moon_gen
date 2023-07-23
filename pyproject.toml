@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "moon_gen"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="mbiselx"},
 ]
@@ -13,10 +13,18 @@ requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Natural Language :: English",
-    "License :: OSI Approved :: MIT License",
+    "License :: None",
     "Operating System :: OS Independent",
 ]
 dependencies = [
     "pyqtgraph",
-    "numpy"
+    "numpy", 
+    "scipy"
+]
+
+[project.optional-dependencies]
+test = [
+    "autopep8",
+    "flake8",
+    "pytest"
 ]
