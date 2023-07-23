@@ -1,5 +1,10 @@
 # Moon Surface Generator
 
+[![Testing](https://github.com/mbiselx/moon_gen/actions/workflows/python-testing.yml/badge.svg)](https://github.com/mbiselx/moon_gen/actions/workflows/python-testing.yml)
+[![Formatting](https://github.com/mbiselx/moon_gen/actions/workflows/python-lint_and_format.yml/badge.svg)](https://github.com/mbiselx/moon_gen/actions/workflows/python-lint_and_format.yml) 
+
+
+
 The following is a small app allowing one to visualize a surface (such as an elevation model), defined in a python file. 
 The purpose is to aid in the development of algorithms to generate nice-looking lunar-like surfaces for lunar rover surface operation simulations. 
 
