@@ -70,7 +70,8 @@ class SurfacePlotter(QtWidgets.QFrame):
 
         self._exportAction = QtGui.QAction('&Export surface', self)
         self._exportAction.setIcon(self.style().standardIcon(
-            QtWidgets.QStyle.StandardPixmap.SP_ToolBarHorizontalExtensionButton))
+            QtWidgets.QStyle.StandardPixmap.SP_ToolBarHorizontalExtensionButton
+        ))
         self._exportAction.setShortcut(QtGui.QKeySequence('Ctrl+S'))
         self._exportAction.triggered.connect(self.exportSurface)
         self.addAction(self._exportAction)
@@ -124,7 +125,9 @@ class SurfacePlotter(QtWidgets.QFrame):
 
         if filename.casefold().endswith('.py'):
             self.plotSurfaceFromModule(filename)
-        elif filename.casefold().endswith(('.png', '.jpg', '.jepg', '.tif', '.tiff')):
+        elif filename.casefold().endswith(
+            ('.png', '.jpg', '.jepg', '.tif', '.tiff')
+        ):
             self.plotSurfaceFromHeightmap(filename)
         else:
             ermsg = f"unsupported filetype `{filename.rsplit('.', 1)[-1]}`"
@@ -168,22 +171,26 @@ class SurfacePlotter(QtWidgets.QFrame):
             ptr = surface_image.constBits()
             ptr.setsize(surface_image.sizeInBytes())
 
-            # QImage has some end-of-line padding, so that each line is word-aligned
+            # QImage has some end-of-line padding, so that each line
+            # is word-aligned
             padding = surface_image.sizeInBytes()//w - h
 
             x_range, _ = QtWidgets.QInputDialog.getDouble(
                 self,
-                "X range", "please input width of heightmap image (in meters)",
+                "X range",
+                "please input width of heightmap image (in meters)",
                 20, 0, 10000
             )
             y_range, _ = QtWidgets.QInputDialog.getDouble(
                 self,
-                "Y range", "please input height of heightmap image (in meters)",
+                "Y range",
+                "please input height of heightmap image (in meters)",
                 x_range/w*h, 0, 10000
             )
             z_range, _ = QtWidgets.QInputDialog.getDouble(
                 self,
-                "Z range", "please input depth of heightmap image (in meters)",
+                "Z range",
+                "please input depth of heightmap image (in meters)",
                 1, 0, 10000
             )
 
