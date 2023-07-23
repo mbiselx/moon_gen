@@ -1,7 +1,16 @@
 import numpy as np
 
+from moon_gen.lib.utils import SurfaceType
 
-def surface(n=120) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+__depends__ = [
+    "moon_gen.lib.utils",
+]
+
+
+def surface(n=120) -> SurfaceType:
+    '''
+    creates a surface with a single simple (conic) crater
+    '''
     nx = ny = n
 
     # generate the initial flat terrain

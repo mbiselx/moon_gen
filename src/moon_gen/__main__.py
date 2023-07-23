@@ -10,7 +10,8 @@ from moon_gen.surface_plotter import SurfacePlotter
 parser = argparse.ArgumentParser()
 parser.add_argument('FILE', nargs='?', type=str, help='input file')
 parser.add_argument('-n', '--newest', action='store_true',
-                    help='use the most recently modified file in the module\'s `surfaces` folder')
+                    help='use the most recently modified file '
+                    'in the module\'s `surfaces` folder')
 args = parser.parse_args()
 
 

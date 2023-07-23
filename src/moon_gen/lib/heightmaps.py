@@ -1,10 +1,31 @@
+'''
+HEIGHTMAPS.PY
+
+This submodule contains functions useful for generating random or
+procedural heightmaps based on perlin noise.
+'''
+
 import math
 import typing
 
 import numpy as np
+from numpy.typing import NDArray
+
+from .distributions import surface_psd_rough
 
 
-def cash(x_coord: int | np.ndarray, y_coord: int | np.ndarray, seed: int | np.ndarray = 0):
+@typing.overload
+def cash(x_coord: int, y_coord: int, seed: int = 0) -> int:
+    ...
+
+
+@typing.overload
+def cash(x_coord: NDArray[np.int_], y_coord: NDArray[np.int_],
+         seed: int = 0) -> int | NDArray[np.int_]:
+    ...
+
+
+def cash(x_coord, y_coord, seed: int = 0):
     '''
     cash stands for chaos hash :D
 
@@ -22,11 +43,15 @@ def interpolate(low: float, high: float, w: float) -> float:
 
 
 @typing.overload
-def interpolate(low: np.ndarray, high: np.ndarray, w: np.ndarray) -> np.ndarray:
+def interpolate(
+    low: NDArray[np.float64],
+    high: NDArray[np.float64],
+    w: NDArray[np.float64]
+) -> NDArray[np.float64]:
     ...
 
 
-def interpolate(low: float | np.ndarray, high: float | np.ndarray, w: float | np.ndarray):
+def interpolate(low, high, w):
     '''interpolate a point `w` between `low` and `high`'''
     # return (a1 - a0) * w + a0
     return (high - low) * (3.0 - w * 2.0) * w * w + low
@@ -45,6 +70,11 @@ def dot_grid_gradient(ix: int, iy: int, x: float, y: float):
 
 
 def perlin(x: float, y: float):
+    '''
+    create perlin noise point-by-point, as shown on Wikipedia.
+
+    very inefficient in Python.
+    '''
     x0, y0 = math.floor(x), math.floor(y)
     x1, y1 = x0+1, y0+1
     wx, wy = x-x0, y-y0
@@ -61,7 +91,11 @@ def perlin(x: float, y: float):
     return i
 
 
-def _perlin_grid(x: np.ndarray, y: np.ndarray):
+def _perlin_grid(x: NDArray, y: NDArray) -> NDArray:
+    '''
+    create a perlin grid, using a point-wise method.
+    not recommended, as it is very slow.
+    '''
     z = np.zeros((len(y), len(x)))
     for row, y_coord in enumerate(y):
         for col, x_coord in enumerate(x):
@@ -69,7 +103,12 @@ def _perlin_grid(x: np.ndarray, y: np.ndarray):
     return z
 
 
-def perlin_grid(x: np.ndarray, y: np.ndarray):
+def perlin_grid(x: NDArray[np.float_],
+                y: NDArray[np.float_]) -> NDArray[np.float_]:
+    '''
+    generate a perlin noise grid using numpy.
+    Fast-ish, but consumes a lot of memory.
+    '''
     x0, y0 = np.floor(x).astype(np.int64), np.floor(y).astype(np.int64)
     x1, y1 = x0+1, y0+1
     dx0, dy0 = x-x0, y-y0
@@ -95,31 +134,37 @@ def perlin_grid(x: np.ndarray, y: np.ndarray):
     return n
 
 
-def surface(n=100) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    nx = ny = n
-    ax = ay = n/10
+def perlin_multiscale_grid(
+        x: NDArray[np.float_],
+        y: NDArray[np.float_],
+        octaves: int = 8,
+        psd: typing.Callable[[float], float] = surface_psd_rough
+) -> NDArray[np.float_]:
+    '''
+    generate multiscale perlin noise with a given power spectral density
 
-    x = np.linspace(-ax/2, ax/2, nx)
-    y = np.linspace(-ay/2, ay/2, ny)
+    Arguments :
+        x   :   x coordinates
+        y   :   y coordinates
+        psd :   desired power spectral density -- starting with the lowest
+                (nonzero) frequency
+    '''
+    x0, y0 = x.min(), y.min()
+    rx, ry = x.ptp(), y.ptp()
+    nx, ny = len(x), len(y)
 
-    z1 = _perlin_grid(x[n//2:], y)
-    z2 = perlin_grid(x[n//2:], y)
-    z = np.hstack((z1, z2))
-    print("done")
-    return x, y, z
+    r = ry / rx
 
+    a = 1/32
+    grids = []
+    for _ in range(octaves):
+        a *= 2
 
-if __name__ == "__main__":
-    import timeit
+        xx = np.linspace(-a+x0, a+x0, nx)
+        yy = np.linspace(-r*a+y0, r*a+y0, ny)
 
-    setup = '''
-import numpy as np
-from moon_gen.surfaces.perlin_simplescale import perlin_grid, noise_grid
-x = np.linspace(-10, 10, 200)
-y = np.linspace(-10, 10, 200)
-'''
-    N = 10
-    tn = timeit.timeit("perlin_grid(x,y)", setup, number=N)
-    print("using numpy:", tn)
-    tm = timeit.timeit("_perlin_grid(x,y)", setup, number=N)
-    print("using math:", tm)
+        weight = math.sqrt(psd(2*a/rx))
+
+        grids.append(weight * perlin_grid(xx, yy))
+
+    return sum(grids, start=np.zeros((len(x), len(x))))
