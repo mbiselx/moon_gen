@@ -11,30 +11,7 @@ import typing
 import numpy as np
 from numpy.typing import NDArray
 
-from .distributions import surface_psd_rough
-
-
-@typing.overload
-def cash(x_coord: int, y_coord: int, seed: int = 0) -> int:
-    ...
-
-
-@typing.overload
-def cash(x_coord: NDArray[np.int_], y_coord: NDArray[np.int_],
-         seed: int = 0) -> int | NDArray[np.int_]:
-    ...
-
-
-def cash(x_coord, y_coord, seed: int = 0):
-    '''
-    cash stands for chaos hash :D
-
-    It's not really a hash, but it's perfect for what i'm doing
-    https://stackoverflow.com/a/37221804/21688300
-    '''
-    h = seed + x_coord*374761393 + y_coord*668265263  # all constants are prime
-    h = (h ^ (h >> 13))*1274126177
-    return h ^ (h >> 16)
+from .distributions import cash, surface_psd_rough
 
 
 @typing.overload

@@ -12,16 +12,17 @@ from numpy.typing import NDArray
 
 from scipy.ndimage import gaussian_filter
 
-from .distributions import radius_probability, HDR, DDR
+from .distributions import (HDR, DDR, radius_probability, random_radius,
+                            cash, cash_norm)
 
 
 def make_excavation(
-        x: NDArray,
-        y: NDArray,
+        x: NDArray[np.float_],
+        y: NDArray[np.float_],
         center: tuple[float, float],
         radius: float = 1,
         elevation: float = 0
-) -> NDArray:
+) -> NDArray[np.float_]:
     '''
     return the hyperbola corresponding to the excavation of a single crater
     '''
@@ -34,11 +35,11 @@ def make_excavation(
 
 
 def make_ejecta(
-        x: NDArray,
-        y: NDArray,
+        x: NDArray[np.float_],
+        y: NDArray[np.float_],
         center: tuple[float, float],
         radius: float = 1,
-) -> NDArray:
+) -> NDArray[np.float_]:
     '''
     return the elevation corresponding to the ejecta from a single crater
     '''
@@ -50,11 +51,11 @@ def make_ejecta(
 
 
 def make_random_crater(
-        x: NDArray,
-        y: NDArray,
-        z: NDArray,
-        p: Callable[[], float] = radius_probability
-) -> np.ndarray:
+        x: NDArray[np.float_],
+        y: NDArray[np.float_],
+        z: NDArray[np.float_],
+        p: Callable[[], float] = random_radius
+) -> NDArray[np.float_]:
     '''
     make a random crater in the given `z` surface.
     The position of the crater will be uniformly random along `x` and `y`.
@@ -84,3 +85,50 @@ def make_random_crater(
 def waste_gaussian(z: NDArray, duration: float) -> NDArray:
     '''simulate mass wasting between impacts, using gaussian blur.'''
     return 0.5*(z+gaussian_filter(z, sigma=5*duration))
+
+
+def make_procedural_craters(
+        x: NDArray[np.float_],
+        y: NDArray[np.float_],
+        z: NDArray[np.float_],
+        thresh: float = .999
+) -> NDArray[np.float_]:
+    # create a grid based on the millimeter point location
+    xx, yy = np.meshgrid(x, y, indexing='ij')
+    chaos_grid = cash(
+        (1000*xx).astype(np.int64),
+        (1000*yy).astype(np.int64),
+        1234567890
+    )
+
+    # sanity check
+    assert z.shape == chaos_grid.shape
+
+    # the areas greater than thresh will have a crater center.
+    # NOTE: `np.nonzero returns row, column index`
+    row_idx, col_idx = np.nonzero(chaos_grid > thresh*(2**63))
+
+    # the age of the crater will be calculated from the chaos value
+    ages = chaos_grid[row_idx, col_idx].argsort()
+
+    cxs, cys = x[row_idx[ages]], y[col_idx[ages]]
+    radii = radius_probability(
+        cash_norm(
+            cxs.astype(np.int64),
+            cys.astype(np.int64)
+        ),
+        maximum=5
+    )
+
+    # apply craters in order of appearance : oldest first
+    print(f"generating {len(radii)} craters")
+    for radius, cx, cy in zip(radii, cxs, cys):
+        elevation = z[
+            (xx-cx)**2 + (yy-cy)**2 < radius**2
+        ].mean()
+
+        z += make_ejecta(x, y, (cx, cy), radius)
+        crater = make_excavation(x, y, (cx, cy), radius, elevation)
+        z = np.minimum(z, crater)
+
+    return z

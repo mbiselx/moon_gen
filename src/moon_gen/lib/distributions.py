@@ -5,8 +5,11 @@ This sub-module contains the probabilites and distributions to draw from
 for the different surface generators.
 '''
 
-import math
 import random
+import typing
+
+import numpy as np
+from numpy.typing import NDArray
 
 # The following two ratio values are taken from
 # LUNAR SURFACE MODELS, Marshall Space Center, p 16
@@ -19,9 +22,27 @@ HDR = 0.075  # for aesthetics -- less looks bad ???
 '''height-to-diameter ratio'''
 
 
-def radius_probability(*, minimum: float = .1, maximum: float = 50) -> float:
+@typing.overload
+def radius_probability(
+    x: float, *,
+    minimum: float = .1,
+    maximum: float = 50
+) -> float:
+    ...
+
+
+@typing.overload
+def radius_probability(
+    x: NDArray[np.float_], *,
+    minimum: float = .1,
+    maximum: float = 50
+) -> NDArray[np.float_]:
+    ...
+
+
+def radius_probability(x, *, minimum: float = .1, maximum: float = 50):
     '''
-    return a radius, roughly based on
+    for a number between [0 - 1], return a radius, roughly based on
     LUNAR SURFACE MODELS, Marshall Space Center, p 21
     https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
 
@@ -33,8 +54,17 @@ def radius_probability(*, minimum: float = .1, maximum: float = 50) -> float:
     turn this into an inverse CDF to generate a random number:
         icdf(x) = sqrt((1-x)/(5y))
     '''
-    x = random.random()
-    return min(max(minimum, math.sqrt((1-x)/(50*x))), maximum)
+    return np.clip(np.sqrt((1-x)/(50*x)), minimum, maximum)
+
+
+def random_radius(*, minimum: float = .1, maximum: float = 50) -> float:
+    '''return a radius using the function `radius_probability`'''
+
+    return radius_probability(
+        random.random(),
+        minimum=minimum,
+        maximum=maximum
+    )
 
 
 def surface_psd_nominal(f: float) -> float:
@@ -57,3 +87,43 @@ def surface_psd_rough(f: float) -> float:
     (meters**2/cycles/meter) -> (cycles/meter)
     '''
     return 4 / (8e4 * f**3 + 1) + 1/(3e3 * f**2 + 50)
+
+
+@typing.overload
+def cash(x_coord: int, y_coord: int, seed: int = 0) -> int:
+    ...
+
+
+@typing.overload
+def cash(x_coord: NDArray[np.int64], y_coord: NDArray[np.int64],
+         seed: int = 0) -> NDArray[np.int64]:
+    ...
+
+
+def cash(x_coord, y_coord, seed: int = 0):
+    '''
+    cash stands for chaos hash :D
+
+    It's not really a hash, but it's perfect for what i'm doing
+    https://stackoverflow.com/a/37221804/21688300
+    '''
+    h = seed + x_coord*374761393 + y_coord*668265263  # all constants are prime
+    h = (h ^ (h >> 13))*1274126177
+    return (h ^ (h >> 16))
+
+
+@typing.overload
+def cash_norm(x_coord: int, y_coord: int, seed: int = 0) -> float:
+    ...
+
+
+@typing.overload
+def cash_norm(x_coord: NDArray[np.int64], y_coord: NDArray[np.int64],
+              seed: int = 0) -> NDArray[np.float64]:
+    ...
+
+
+def cash_norm(x_coord, y_coord, seed: int = 0):
+    '''return the output of `cash`, normalized to a range of [0 - 1)'''
+    # return (np.cos(cash(x_coord, y_coord, seed=seed)) + 1.)*0.5
+    return (cash(x_coord, y_coord, seed=seed)) / 2**63
