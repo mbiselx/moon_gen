@@ -4,7 +4,7 @@ import sys
 import types
 import importlib
 
-import unittest
+import pytest
 
 import numpy as np
 
@@ -58,42 +58,22 @@ class Suppressor():
     def flush(self): pass
 
 
-class TestSurfaces(unittest.TestCase):
-    def __init__(self, surface_module: types.ModuleType) -> None:
-        super().__init__()
-        self.module = surface_module
+@pytest.mark.parametrize("module", load_surface_submodules())
+def test_suface_module(module: types.ModuleType):
+    assert hasattr(module, 'surface'), 'missing a `surface` method'
+    assert callable(module.surface), 'missing a `surface` method'
 
-    def runTest(self):
-        '''test to make sure this submodule produces a valid surface'''
+    # silently create the surface
+    with Suppressor():
+        X, Y, Z, *C = module.surface()
 
-        self.surface_exists = hasattr(
-            self.module, 'surface') and callable(self.module.surface)
+    assert isinstance(X, np.ndarray), "X is expected to be a numpy array"
+    assert isinstance(Y, np.ndarray), "Y is expected to be a numpy array"
+    assert isinstance(Z, np.ndarray), "Z is expected to be a numpy array"
 
-        self.assertTrue(
-            self.surface_exists,
-            f"Module `{self.module.__name__}` is missing a `surface` method"
-        )
-
-        with Suppressor():
-            X, Y, Z, *C = self.module.surface()
-
-        self.assertIsInstance(
-            X, np.ndarray, f"In {self.module.__name__} : X is expected to be a numpy array, not {type(X)}")
-        self.assertIsInstance(
-            Y, np.ndarray, f"In {self.module.__name__} : Y is expected to be a numpy array, not {type(Y)}")
-        self.assertIsInstance(
-            Z, np.ndarray, f"In {self.module.__name__} : Z is expected to be a numpy array, not {type(Z)}")
-
-        self.assertEqual(
-            X.shape[0], Z.shape[0], f"In {self.module.__name__} : Mismatch X and Z shapes for surface")
-        self.assertEqual(
-            Y.shape[0], Z.shape[1], f"In {self.module.__name__} : Mismatch Y and Z shapes for surface")
+    assert X.shape[0] == Z.shape[0], "Mismatch X and Z shapes for surface"
+    assert Y.shape[0] == Z.shape[1], "Mismatch Y and Z shapes for surface"
 
 
-def suite():
-    modules = load_surface_submodules()
-    return unittest.TestSuite(TestSurfaces(m) for m in modules)
-
-
-if __name__ == '__main__':
-    unittest.TextTestRunner().run(suite())
+if __name__ == "__main__":
+    exit(pytest.main())

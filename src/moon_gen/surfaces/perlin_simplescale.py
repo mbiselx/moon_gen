@@ -29,7 +29,7 @@ def interpolate(low: np.ndarray, high: np.ndarray, w: np.ndarray) -> np.ndarray:
 def interpolate(low: float | np.ndarray, high: float | np.ndarray, w: float | np.ndarray):
     '''interpolate a point `w` between `low` and `high`'''
     # return (a1 - a0) * w + a0
-    return (high - low) *  (3.0 - w * 2.0) * w * w + low
+    return (high - low) * (3.0 - w * 2.0) * w * w + low
 
 
 def random_gradient(ix: int, iy: int, seed: int = 0):
@@ -95,7 +95,7 @@ def perlin_grid(x: np.ndarray, y: np.ndarray):
     return n
 
 
-def surface(n=100) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def surfac(n=100) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     nx = ny = n
     ax = ay = n/10
 
