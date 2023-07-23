@@ -126,8 +126,6 @@ def perlin_grid(x: NDArray[np.float_],
     n10 = (np.cos(c10)*dx1) + (np.sin(c10).T*dy0).T
     n11 = (np.cos(c11)*dx1) + (np.sin(c11).T*dy1).T
 
-    print(n00.dtype)
-
     # interpolate
     nx0 = interpolate(n00, n10, dx0)
     nx1 = interpolate(n01, n11, dx0)

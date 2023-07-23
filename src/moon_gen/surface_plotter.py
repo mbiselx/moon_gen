@@ -7,6 +7,7 @@ import os
 import sys
 import logging
 import importlib
+from types import ModuleType
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,22 +18,24 @@ if TYPE_CHECKING:
 else:
     from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
+from moon_gen.lib.utils import SurfaceFunctionType, SurfaceType
+
 
 class SurfacePlotter(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._logger = logging.getLogger(self.__class__.__name__)
-        self._module = None
+        self._module: ModuleType | None = None
 
         self.vw = gl.GLViewWidget(self)
 
         self.grid = gl.GLGridItem()
         self.vw.addItem(self.grid)
 
-        self._surfaceData = (
-            np.arange(0, 2),
-            np.arange(0, 2),
+        self._surfaceData: SurfaceType = (
+            np.arange(0, 2.),
+            np.arange(0, 2.),
             np.zeros((2, 2))
         )
 
@@ -149,9 +152,14 @@ class SurfacePlotter(QtWidgets.QFrame):
 
         # try to retrieve a surface from the module
         try:
-            self._surfaceData = module.surface()
+            surface_func: SurfaceFunctionType = module.surface
+            self._surfaceData = surface_func()
             self.surf.setData(*self._surfaceData)
             self._module = module
+            if surface_func.__doc__ is not None:
+                self.setToolTip(surface_func.__doc__)
+            else:
+                self.setToolTip('')
         except Exception as e:
             ermsg = f"failed to plot surface from module ({e})"
             self._err_message.showMessage(ermsg, 'error')
@@ -206,6 +214,8 @@ class SurfacePlotter(QtWidgets.QFrame):
             self.surf.setData(*self._surfaceData)
             self._module = None
 
+            self.setToolTip(os.path.basename(filename))
+
         except Exception as e:
             ermsg = f"failed to load heightmap image ({e})"
             self._err_message.showMessage(ermsg, 'error')
@@ -235,21 +245,24 @@ class SurfacePlotter(QtWidgets.QFrame):
         self.surf.setData(*self._surfaceData)
 
     def reloadSurfaceImage(self):
-        x, y, z = self._surfaceData
+        x, y, z, *c = self._surfaceData
 
         x_range, _ = QtWidgets.QInputDialog.getDouble(
             self,
-            "X range", "please input width of heightmap image (in meters)",
+            "X range",
+            "please input width of heightmap image (in meters)",
             x.ptp(), 0, 10000
         )
         y_range, _ = QtWidgets.QInputDialog.getDouble(
             self,
-            "Y range", "please input height of heightmap image (in meters)",
+            "Y range",
+            "please input height of heightmap image (in meters)",
             y.ptp(), 0, 10000
         )
         z_range, _ = QtWidgets.QInputDialog.getDouble(
             self,
-            "Z range", "please input depth of heightmap image (in meters)",
+            "Z range",
+            "please input depth of heightmap image (in meters)",
             z.ptp(), 0, 10000
         )
 
@@ -276,7 +289,7 @@ class SurfacePlotter(QtWidgets.QFrame):
         if not filename.casefold().endswith('.png'):
             filename += '.png'
 
-        _, _, z = self._surfaceData
+        _, _, z, *c = self._surfaceData
 
         # zz: np.ndarray = (1000*(z - z.min())).astype(np.uint16)
         zz: np.ndarray = ((z - z.min())*(255/z.ptp())).astype(np.uint8)
