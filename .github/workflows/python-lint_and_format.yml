@@ -1,13 +1,13 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Python package
+name: Formatting
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "*" ]
   pull_request: 
-    branches: [ "main"]
+    branches: [ "*"]
 
 jobs:
   build:
@@ -27,13 +27,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest
-        python -m pip install .
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        python -m pip install autopep8 flake8
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-    - name: Test with pytest
-      run: |
-        pytest tests
+        # stop the test if there are long lines or other messy things
+        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+    - name: Check formatting with autopep8
+      run: | 
+        # consider formatting divergences as errors 
+        autopep8 --recursive --diff --exit-code .
