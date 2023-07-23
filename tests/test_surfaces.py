@@ -41,7 +41,7 @@ def load_surface_submodules():
 class Suppressor():
     '''
     suppress output to `stdout`
-    https://stackoverflow.com/a/40054132/21688300 
+    https://stackoverflow.com/a/40054132/21688300
     '''
 
     def __enter__(self):

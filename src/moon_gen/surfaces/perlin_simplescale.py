@@ -95,7 +95,7 @@ def perlin_grid(x: np.ndarray, y: np.ndarray):
     return n
 
 
-def surfac(n=100) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def surface(n=100) -> tuple[np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     nx = ny = n
     ax = ay = n/10
 

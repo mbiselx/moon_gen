@@ -211,7 +211,7 @@ class SurfacePlotter(QtWidgets.QFrame):
         elif self._surfaceData is not None:
             self.reloadSurfaceImage()
         else:
-            ermsg = f"No surface to reload"
+            ermsg = "No surface to reload"
             self._err_message.showMessage(ermsg, 'warning')
             self._logger.warn(ermsg)
 
