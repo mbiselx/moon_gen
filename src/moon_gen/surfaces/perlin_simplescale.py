@@ -29,7 +29,7 @@ def interpolate(low: np.ndarray, high: np.ndarray, w: np.ndarray) -> np.ndarray:
 def interpolate(low: float | np.ndarray, high: float | np.ndarray, w: float | np.ndarray):
     '''interpolate a point `w` between `low` and `high`'''
     # return (a1 - a0) * w + a0
-    return (high - low) * (3.0 - w * 2.0) * w * w + low
+    return (high - low) *  (3.0 - w * 2.0) * w * w + low
 
 
 def random_gradient(ix: int, iy: int, seed: int = 0):
