@@ -67,7 +67,38 @@ def random_radius(*, minimum: float = .1, maximum: float = 50) -> float:
     )
 
 
+@typing.overload
+def surface_psd_smooth(f: float) -> float:
+    ...
+
+
+@typing.overload
+def surface_psd_smooth(f: NDArray[np.float_]) -> NDArray[np.float_]:
+    ...
+
+
+def surface_psd_smooth(f):
+    '''
+    return a surface Power Spectral Density value for a given frequency,
+    roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 20
+    https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
+
+    (meters**2/cycles/meter) -> (cycles/meter)
+    '''
+    return 5 / (2e6 * f**3.35 + 10)
+
+
+@typing.overload
 def surface_psd_nominal(f: float) -> float:
+    ...
+
+
+@typing.overload
+def surface_psd_nominal(f: NDArray[np.float_]) -> NDArray[np.float_]:
+    ...
+
+
+def surface_psd_nominal(f):
     '''
     return a surface Power Spectral Density value for a given frequency,
     roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 20
@@ -78,7 +109,17 @@ def surface_psd_nominal(f: float) -> float:
     return 3 / (2e5 * f**3.35 + 1)
 
 
+@typing.overload
 def surface_psd_rough(f: float) -> float:
+    ...
+
+
+@typing.overload
+def surface_psd_rough(f: NDArray[np.float_]) -> NDArray[np.float_]:
+    ...
+
+
+def surface_psd_rough(f):
     '''
     return a surface Power Spectral Density value for a given frequency,
     roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 20

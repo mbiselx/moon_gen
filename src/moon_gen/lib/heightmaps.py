@@ -133,7 +133,7 @@ def perlin_multiscale_grid(
     r = ry / rx
 
     a = 1/32
-    grids = []
+    grids: list[NDArray[np.float_]] = []
     for _ in range(octaves):
         a *= 2
 
