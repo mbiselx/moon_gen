@@ -106,7 +106,7 @@ def surface_psd_nominal(f):
 
     (meters**2/cycles/meter) -> (cycles/meter)
     '''
-    return 3 / (2e5 * f**3.35 + 1)
+    return 2.5 / (2e5 * f**3.35 + 1)
 
 
 @typing.overload
@@ -168,3 +168,22 @@ def cash_norm(x_coord, y_coord, seed: int = 0):
     '''return the output of `cash`, normalized to a range of [0 - 1)'''
     # return (np.cos(cash(x_coord, y_coord, seed=seed)) + 1.)*0.5
     return (cash(x_coord, y_coord, seed=seed)) / 2**63
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    f = np.logspace(-2, 1)
+
+    fig, ax = plt.subplots()
+    ax.loglog(f, surface_psd_rough(f), 'k-', label="rough mare")
+    ax.loglog(f, surface_psd_nominal(f), 'k--', label="rough upland")
+    ax.loglog(f, surface_psd_smooth(f), 'k-.', label="smooth mare")
+    ax.set_xlim(1e-2, 1e2)
+    ax.set_xlabel("Frequency [cycles/meter]")
+    ax.set_ylim(1e-4, 1e1)
+    ax.set_ylabel("PSD [meters$^2$/cycles/meter]")
+    ax.set_title("Surface roughness PSD")
+    ax.legend()
+
+    plt.show()
