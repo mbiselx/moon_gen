@@ -15,7 +15,7 @@ def surface(n=513) -> SurfaceType:
     generate a multi-scale perlin noise heightmap, with a PSD
     roughly equivalent that that of a rough lunar heighland
     '''
-    nx = ny = 2000
+    nx = ny = n
     ax = ay = 100
 
     x = np.linspace(-ax/2, ax/2, nx)

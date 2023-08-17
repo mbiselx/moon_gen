@@ -12,8 +12,10 @@ from numpy.typing import NDArray
 
 from scipy.ndimage import gaussian_filter
 
-from .distributions import (HDR, DDR, radius_probability, random_radius,
-                            cash, cash_norm)
+from .distributions import (
+    HDR, DDR,
+    crater_density_fresh, crater_density_young, crater_density_mature, crater_density_old,
+    cash, cash_norm)
 
 
 def make_excavation(
@@ -54,19 +56,17 @@ def make_random_crater(
         x: NDArray[np.float_],
         y: NDArray[np.float_],
         z: NDArray[np.float_],
-        p: Callable[[], float] = random_radius
+        radius: float
 ) -> NDArray[np.float_]:
     '''
     make a random crater in the given `z` surface.
     The position of the crater will be uniformly random along `x` and `y`.
-    The radius of the crater will be given by the probability function `p.
+    The radius of the crater will be `r`.
     '''
     step = x.ptp()/len(x)
     # center
     center = (x.ptp() * np.random.random() + x.min(),
               y.ptp() * np.random.random() + y.min())
-    # scale
-    radius = p()
     # elevation
     elevation = z[np.abs(x-center[0]) < step,
                   np.abs(y-center[1]) < step].mean()
@@ -112,12 +112,11 @@ def make_procedural_craters(
     ages = chaos_grid[row_idx, col_idx].argsort()
 
     cxs, cys = x[row_idx[ages]], y[col_idx[ages]]
-    radii = radius_probability(
+    radii = crater_density_young.diameter(
         cash_norm(
             cxs.astype(np.int64),
             cys.astype(np.int64)
-        ),
-        maximum=5
+        )
     )
 
     # apply craters in order of appearance : oldest first
