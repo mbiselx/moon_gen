@@ -36,7 +36,7 @@ def surface(n=257) -> SurfaceType:
         x+cx,
         y+cy,
         octaves=12,
-        psd=surface_psd_smooth)
+        psd=surface_psd_nominal)
 
     distribution = crater_density_mature
     distribution.d_min = 4*ax/n

@@ -14,7 +14,7 @@ __depends__ = [
 
 def surface(n=257) -> SurfaceType:
     '''
-    creates a surface with a random number of simple (hyperbolic) craters
+    creates a surface with a random number of simple (parabolic) craters
     '''
     nx = ny = n
     size = 10

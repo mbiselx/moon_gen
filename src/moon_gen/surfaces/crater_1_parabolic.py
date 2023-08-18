@@ -11,7 +11,7 @@ __depends__ = [
 
 def surface(n=150) -> SurfaceType:
     '''
-    creates a surface with a single simple (hyperbolic) crater
+    creates a surface with a single simple (parabolic) crater
     '''
     nx = ny = n
 

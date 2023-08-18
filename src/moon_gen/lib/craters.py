@@ -26,7 +26,7 @@ def make_excavation(
         elevation: float = 0
 ) -> NDArray[np.float_]:
     '''
-    return the hyperbola corresponding to the excavation of a single crater
+    return the paraboloid corresponding to the excavation of a single crater
     '''
     r_square = ((x-center[0]).reshape((len(x), 1))**2 +
                 (y-center[1]).reshape((1, len(y)))**2)
