@@ -2,7 +2,10 @@
 import numpy as np
 
 from moon_gen.lib.utils import SurfaceType
-from moon_gen.lib.heightmaps import perlin_multiscale_grid, surface_psd_rough, surface_psd_nominal, surface_psd_smooth
+from moon_gen.lib.heightmaps import (  # noqa: F401
+    perlin_multiscale_grid,
+    surface_psd_rough, surface_psd_nominal, surface_psd_smooth
+)
 
 __depends__ = [
     "moon_gen.lib.utils",

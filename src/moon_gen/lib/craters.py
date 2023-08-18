@@ -5,17 +5,17 @@ This submodule contains functions useful for generating graters on
 a surface
 '''
 
-from typing import Callable
-
 import numpy as np
 from numpy.typing import NDArray
 
 from scipy.ndimage import gaussian_filter
 
-from .distributions import (
+from .distributions import (  # noqa: F401
     HDR, DDR,
-    crater_density_fresh, crater_density_young, crater_density_mature, crater_density_old,
-    cash, cash_norm)
+    crater_density_fresh, crater_density_young,
+    crater_density_mature, crater_density_old,
+    cash, cash_norm
+    )
 
 
 def make_excavation(

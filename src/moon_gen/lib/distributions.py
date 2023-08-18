@@ -5,9 +5,7 @@ This sub-module contains the probabilites and distributions to draw from
 for the different surface generators.
 '''
 
-import random
 import typing
-from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -24,13 +22,17 @@ HDR = 0.075  # for aesthetics -- less looks bad ???
 
 
 class PowerDistribution:
-    def __init__(self, intercept: float, power: float = -2., d_min: float = 0.1) -> None:
-        '''
-        roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 21
-        https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
+    '''
+    roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 21
+    https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
+    '''
 
-        Args: 
-        * intercept : the intercept of the x=1 axis in the cumulative distribution chart
+    def __init__(self, intercept: float, power: float = -2.,
+                 d_min: float = 0.1) -> None:
+        '''
+        Args:
+        * intercept : the intercept of the x=1 axis in the cumulative
+                        distribution chart
         * power :     the power of the distribution
         * d_min :     the minimum admissible diameter
         '''

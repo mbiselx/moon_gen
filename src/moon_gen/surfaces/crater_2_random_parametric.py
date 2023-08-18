@@ -1,9 +1,10 @@
 import numpy as np
 
 from moon_gen.lib.utils import SurfaceType
-from moon_gen.lib.craters import (
+from moon_gen.lib.craters import (  # noqa: F401
     make_random_crater,
-    crater_density_fresh, crater_density_young, crater_density_mature, crater_density_old,
+    crater_density_fresh, crater_density_young,
+    crater_density_mature, crater_density_old,
 )
 
 __depends__ = [
