@@ -237,11 +237,27 @@ class SurfacePlotter(QtWidgets.QFrame):
         if self._module is None:
             return
 
+        def recursive_reload(module: ModuleType):
+            # try to reload the module if it exists
+            module = importlib.reload(module)
+
+            # check & reload dependencies
+            if hasattr(module, '__depends__'):
+                for submodule_name in module.__depends__:
+                    submodule = importlib.import_module(submodule_name)
+                    recursive_reload(submodule)
+
+                # make sure reloaded dependencies take effect
+                module = importlib.reload(module)
+
+            # return the module
+            return module
+
         # try to reload the module if it exists
-        module = importlib.reload(self._module)
+        self._module = recursive_reload(self._module)
 
         # try to retrieve a surface from the module
-        self._surfaceData = module.surface()
+        self._surfaceData = self._module.surface()
         self.surf.setData(*self._surfaceData)
 
     def reloadSurfaceImage(self):
