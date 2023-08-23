@@ -2,7 +2,7 @@ import numpy as np
 
 from moon_gen.lib.utils import SurfaceType
 from moon_gen.lib.craters import (  # noqa: F401
-    make_random_crater,
+    make_crater,
     crater_density_fresh, crater_density_young,
     crater_density_mature, crater_density_old,
 )
@@ -33,7 +33,9 @@ def surface(n=257) -> SurfaceType:
 
     for _ in range(nb_craters):
         d = distribution.diameter(np.random.random())
-        z = make_random_crater(x, y, z, d/2)
+        center = (x.ptp() * np.random.random() + x.min(),
+                  y.ptp() * np.random.random() + y.min())
+        z = make_crater(x, y, z, d/2, center)
 
     print("done")
 

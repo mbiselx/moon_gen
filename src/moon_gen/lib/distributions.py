@@ -14,10 +14,10 @@ from numpy.typing import NDArray
 # LUNAR SURFACE MODELS, Marshall Space Center, p 16
 # https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
 
-DDR = 0.23  # fresh crater : 0.23 - 0.25
+DDR = 0.25  # fresh crater : 0.23 - 0.25
 '''depth-to-diameter ratio'''
-# HDR = 0.06  # fresh crater : 0.022 - 0.06
-HDR = 0.075  # for aesthetics -- less looks bad ???
+HDR = 0.06  # fresh crater : 0.022 - 0.06
+# HDR = 0.075  # for aesthetics -- less looks bad ???
 '''height-to-diameter ratio'''
 
 

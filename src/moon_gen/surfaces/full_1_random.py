@@ -2,7 +2,7 @@ import numpy as np
 
 from moon_gen.lib.utils import SurfaceType
 from moon_gen.lib.craters import (  # noqa: F401
-    make_random_crater, waste_gaussian,
+    make_crater, waste_gaussian,
     crater_density_fresh, crater_density_young,
     crater_density_mature, crater_density_old,
 )
@@ -18,8 +18,9 @@ __depends__ = [
 ]
 
 
-# def surface(n=513) -> SurfaceType:
-def surface(n=257) -> SurfaceType:
+# def surface(n=1025) -> SurfaceType:
+def surface(n=513) -> SurfaceType:
+    # def surface(n=257) -> SurfaceType:
     '''
     create a random lunar surface using:
      - mutliscale perlin grid with a lunar highland PSD
@@ -28,6 +29,8 @@ def surface(n=257) -> SurfaceType:
     '''
     nx = ny = n
     ax = ay = 20
+    epochs = 6
+
     cx, cy = 100*np.random.random((2,))
     x = np.linspace(-ax/2, ax/2, nx)
     y = np.linspace(-ay/2, ay/2, ny)
@@ -36,20 +39,39 @@ def surface(n=257) -> SurfaceType:
     z = perlin_multiscale_grid(
         x+cx,
         y+cy,
-        octaves=12,
-        psd=surface_psd_nominal)
+        octaves=6,  # don't need many, bc weathering
+        psd=surface_psd_nominal,
+        # psd=surface_psd_smooth,
+    )
 
+    distribution = crater_density_young
     distribution = crater_density_mature
+    # distribution = crater_density_old
     distribution.d_min = 4*ax/n
 
-    nb_craters = 40 + np.random.randint(10, 50)
+    nb_craters = distribution.number(x, y)
     print(f"generating {nb_craters} craters")
 
-    for i in reversed(range(4)):
-        for _ in range(nb_craters//4):
+    # create older craters first and weather them
+    for w in reversed(range(epochs)):
+        for _ in range(nb_craters//epochs):
             d = distribution.diameter(np.random.random())
-            z = make_random_crater(x, y, z, d/2)
-        z = waste_gaussian(z, i/10 + np.random.random()/5)
+            center = (x.ptp() * np.random.random() + x.min(),
+                      y.ptp() * np.random.random() + y.min())
+            z = make_crater(x, y, z, d/2, center)
+
+        if w > 0:
+            z = waste_gaussian(z, ax/nx, w/epochs)
+
+    # apply micro-meteorite impacts
+    z += np.random.normal(scale=2e-2*ax/nx, size=z.shape)
+
+    # create the last remaining craters unweathered
+    for _ in range(nb_craters % epochs):
+        d = distribution.diameter(np.random.random())
+        center = (x.ptp() * np.random.random() + x.min(),
+                  y.ptp() * np.random.random() + y.min())
+        z = make_crater(x, y, z, d/2, center)
 
     print("done")
 

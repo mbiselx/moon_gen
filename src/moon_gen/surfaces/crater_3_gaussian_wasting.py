@@ -2,7 +2,7 @@ import numpy as np
 
 from moon_gen.lib.utils import SurfaceType
 from moon_gen.lib.craters import (  # noqa: F401, E501
-    make_random_crater, waste_gaussian,
+    make_crater, waste_gaussian,
     crater_density_fresh, crater_density_young,
     crater_density_mature, crater_density_old,
 )
@@ -34,9 +34,11 @@ def surface(n=257) -> SurfaceType:
     for _ in range(nb_craters):
         # make the crater
         d = distribution.diameter(np.random.random())
-        z = make_random_crater(x, y, z, d/2)
+        center = (x.ptp() * np.random.random() + x.min(),
+                  y.ptp() * np.random.random() + y.min())
+        z = make_crater(x, y, z, d/2, center)
         # apply mass wasting
-        z = waste_gaussian(z, np.random.random()/5)
+        z = waste_gaussian(z, np.random.random())
 
     # finally, apply micro-meteorite impacts
     z += np.random.normal(scale=0.001, size=z.shape)

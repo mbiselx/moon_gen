@@ -1,7 +1,7 @@
 import numpy as np
 
 from moon_gen.lib.utils import SurfaceType
-from moon_gen.lib.craters import make_ejecta, make_excavation
+from moon_gen.lib.craters import make_crater
 
 __depends__ = [
     "moon_gen.lib.utils",
@@ -27,11 +27,6 @@ def surface(n=150) -> SurfaceType:
     ground = np.zeros((nx, ny))
 
     # apply ejecta to the ground
-    ejecta = make_ejecta(x, y, center, radius)
-    z = ground + ejecta
-
-    # dig the creater
-    crater = make_excavation(x, y, center, radius)
-    z = np.minimum(z, crater)
+    z = make_crater(x, y, ground, radius, center)
 
     return x, y, z

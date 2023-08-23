@@ -137,10 +137,9 @@ def perlin_multiscale_grid(
 
         xx = 2*x/cycle
         yy = 2*y/cycle
-        # print(f"fs={len(xx)/xx.ptp()}, ptp={xx.ptp()}")
         weight = math.sqrt(psd(1/cycle))
         weight *= math.sqrt(10*x.ptp()/cycle)  # heuristic ????
-        print(f"f={1/cycle:6.3f} /m\t{weight=:05.3f}\t({cycle=:7.2f} m)")
+        # print(f"f={1/cycle:6.3f} /m\t{weight=:05.3f}\t({cycle=:7.2f} m)")
 
         grids.append(weight * perlin_grid(xx, yy))
         cycle /= 2
