@@ -27,8 +27,10 @@ def surface(n=257) -> SurfaceType:
     yy = np.linspace(-2*size, 2*size, 4*ny)
     z = .005*np.random.random((nx, 4*ny))
 
-    for i, distribution in enumerate((crater_density_fresh, crater_density_young,
-                                     crater_density_mature, crater_density_old)):
+    for i, distribution in enumerate((crater_density_fresh,
+                                      crater_density_young,
+                                     crater_density_mature,
+                                     crater_density_old)):
         distribution.d_min = 4*size/n
         nb_craters = distribution.number(x, y)
         print(f"generating {nb_craters} craters")
