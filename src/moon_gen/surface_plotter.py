@@ -291,11 +291,13 @@ class SurfacePlotter(QtWidgets.QFrame):
 
     def exportSurface(self, *, filename: str | None = None):
         '''export a surface to a PNG image file'''
+        x, y, z, *c = self._surfaceData
+
         if filename is None:
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 self,
                 'save heightmap',
-                '.',
+                f'./heightmap_{int(x.ptp())}_{int(y.ptp())}_{z.ptp():.1f}.png',
                 'PNG (*.png)'
             )
 
@@ -304,8 +306,6 @@ class SurfacePlotter(QtWidgets.QFrame):
 
         if not filename.casefold().endswith('.png'):
             filename += '.png'
-
-        _, _, z, *c = self._surfaceData
 
         # zz: np.ndarray = (1000*(z - z.min())).astype(np.uint16)
         zz: np.ndarray = ((z - z.min())*(255/z.ptp())).astype(np.uint8)
