@@ -19,7 +19,6 @@ def surface(n=150) -> SurfaceType:
     center = (0., 0.)
     # scale
     radius = 3
-    print("radius=", radius)
 
     # generate the initial flat terrain
     x = np.linspace(-10, 10, nx)

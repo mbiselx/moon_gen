@@ -31,7 +31,6 @@ def surface(n=257) -> SurfaceType:
                       endpoint=True)
 
     for i, wp in zip(loc, reversed(weathering_parameter)):
-        print(i, wp)
         # make crater
         z = make_crater(x, y, z, radius, (i, i))
 

@@ -22,7 +22,7 @@ def surface(n=100) -> SurfaceType:
 
     z1 = _perlin_grid(x[n//2:], y)
     z2 = perlin_grid(x[n//2:], y)
-    z = np.hstack((z1, z2))
+    z = np.vstack((z1, z2))
     print("done")
     return x, y, z
 

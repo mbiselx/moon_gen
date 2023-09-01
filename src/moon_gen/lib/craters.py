@@ -54,7 +54,7 @@ def make_crater(
     '''
     # center r
     r = np.sqrt((x-center[0]).reshape((len(x), 1))**2 +
-                (y-center[1]).reshape((1, len(y)))**2).T
+                (y-center[1]).reshape((1, len(y)))**2)
     # use circular symmetry and numpy magic
     z = crater_2D(r, 0, radius, z)
     return z

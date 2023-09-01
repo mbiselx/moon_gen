@@ -75,6 +75,7 @@ def surface(n=130) -> SurfaceType:
      - gaussian-blur style mass wasting
     '''
     nx = ny = n
+    ny += 1
     ax = ay = 20
     epochs = 6
 

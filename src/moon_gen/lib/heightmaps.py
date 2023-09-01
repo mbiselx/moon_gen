@@ -76,9 +76,9 @@ def _perlin_grid(x: NDArray, y: NDArray) -> NDArray:
     create a perlin grid, using a point-wise method.
     not recommended, as it is very slow.
     '''
-    z = np.zeros((len(y), len(x)))
-    for row, y_coord in enumerate(y):
-        for col, x_coord in enumerate(x):
+    z = np.zeros((len(x), len(y)))
+    for row, x_coord in enumerate(x):
+        for col, y_coord in enumerate(y):
             z[row, col] = perlin(x_coord, y_coord)
     return z
 
@@ -95,21 +95,21 @@ def perlin_grid(x: NDArray[np.float_],
     dx1, dy1 = x-x1, y-y1
 
     # get a "noise vector angle thing" for each gridpoint
-    c00 = cash(*np.meshgrid(x0, y0), seed=0)
-    c01 = cash(*np.meshgrid(x0, y1), seed=0)
-    c10 = cash(*np.meshgrid(x1, y0), seed=0)
-    c11 = cash(*np.meshgrid(x1, y1), seed=0)
+    c00 = cash(*np.meshgrid(x0, y0, indexing='ij'), seed=0)
+    c01 = cash(*np.meshgrid(x0, y1, indexing='ij'), seed=0)
+    c10 = cash(*np.meshgrid(x1, y0, indexing='ij'), seed=0)
+    c11 = cash(*np.meshgrid(x1, y1, indexing='ij'), seed=0)
 
     # get the noise values at each grid point
-    n00 = (np.cos(c00)*dx0) + (np.sin(c00).T*dy0).T
-    n01 = (np.cos(c01)*dx0) + (np.sin(c01).T*dy1).T
-    n10 = (np.cos(c10)*dx1) + (np.sin(c10).T*dy0).T
-    n11 = (np.cos(c11)*dx1) + (np.sin(c11).T*dy1).T
+    n00 = (np.cos(c00).T*dx0).T + (np.sin(c00)*dy0)
+    n01 = (np.cos(c01).T*dx0).T + (np.sin(c01)*dy1)
+    n10 = (np.cos(c10).T*dx1).T + (np.sin(c10)*dy0)
+    n11 = (np.cos(c11).T*dx1).T + (np.sin(c11)*dy1)
 
     # interpolate
-    nx0 = interpolate(n00, n10, dx0)
-    nx1 = interpolate(n01, n11, dx0)
-    n = interpolate(nx0.T, nx1.T, dy0).T
+    nx0 = interpolate(n00.T, n10.T, dx0)
+    nx1 = interpolate(n01.T, n11.T, dx0)
+    n = interpolate(nx0.T, nx1.T, dy0)
 
     return n
 
@@ -144,7 +144,7 @@ def perlin_multiscale_grid(
         grids.append(weight * perlin_grid(xx, yy))
         cycle /= 2
 
-    return sum(grids, start=np.zeros((len(y), len(x))))
+    return sum(grids, start=np.zeros((len(x), len(y))))
 
 
 if __name__ == "__main__":
