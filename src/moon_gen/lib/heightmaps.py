@@ -11,7 +11,10 @@ import typing
 import numpy as np
 from numpy.typing import NDArray
 
-from .distributions import cash, surface_psd_rough
+from moon_gen.lib.distributions import (
+    cash,
+    surface_psd_rough, surface_psd_nominal, surface_psd_smooth
+)
 
 
 @typing.overload
@@ -73,9 +76,9 @@ def _perlin_grid(x: NDArray, y: NDArray) -> NDArray:
     create a perlin grid, using a point-wise method.
     not recommended, as it is very slow.
     '''
-    z = np.zeros((len(y), len(x)))
-    for row, y_coord in enumerate(y):
-        for col, x_coord in enumerate(x):
+    z = np.zeros((len(x), len(y)))
+    for row, x_coord in enumerate(x):
+        for col, y_coord in enumerate(y):
             z[row, col] = perlin(x_coord, y_coord)
     return z
 
@@ -92,21 +95,21 @@ def perlin_grid(x: NDArray[np.float_],
     dx1, dy1 = x-x1, y-y1
 
     # get a "noise vector angle thing" for each gridpoint
-    c00 = cash(*np.meshgrid(x0, y0), seed=0)
-    c01 = cash(*np.meshgrid(x0, y1), seed=0)
-    c10 = cash(*np.meshgrid(x1, y0), seed=0)
-    c11 = cash(*np.meshgrid(x1, y1), seed=0)
+    c00 = cash(*np.meshgrid(x0, y0, indexing='ij'), seed=0)
+    c01 = cash(*np.meshgrid(x0, y1, indexing='ij'), seed=0)
+    c10 = cash(*np.meshgrid(x1, y0, indexing='ij'), seed=0)
+    c11 = cash(*np.meshgrid(x1, y1, indexing='ij'), seed=0)
 
     # get the noise values at each grid point
-    n00 = (np.cos(c00)*dx0) + (np.sin(c00).T*dy0).T
-    n01 = (np.cos(c01)*dx0) + (np.sin(c01).T*dy1).T
-    n10 = (np.cos(c10)*dx1) + (np.sin(c10).T*dy0).T
-    n11 = (np.cos(c11)*dx1) + (np.sin(c11).T*dy1).T
+    n00 = (np.cos(c00).T*dx0).T + (np.sin(c00)*dy0)
+    n01 = (np.cos(c01).T*dx0).T + (np.sin(c01)*dy1)
+    n10 = (np.cos(c10).T*dx1).T + (np.sin(c10)*dy0)
+    n11 = (np.cos(c11).T*dx1).T + (np.sin(c11)*dy1)
 
     # interpolate
-    nx0 = interpolate(n00, n10, dx0)
-    nx1 = interpolate(n01, n11, dx0)
-    n = interpolate(nx0.T, nx1.T, dy0).T
+    nx0 = interpolate(n00.T, n10.T, dx0)
+    nx1 = interpolate(n01.T, n11.T, dx0)
+    n = interpolate(nx0.T, nx1.T, dy0)
 
     return n
 
@@ -119,29 +122,72 @@ def perlin_multiscale_grid(
 ) -> NDArray[np.float_]:
     '''
     generate multiscale perlin noise with a given power spectral density
+    the DC component (zero-frequency) is ignored.
 
     Arguments :
         x   :   x coordinates
         y   :   y coordinates
-        psd :   desired power spectral density -- starting with the lowest
-                (nonzero) frequency
+        psd :   desired power spectral density function
     '''
-    x0, y0 = x.min(), y.min()
-    rx, ry = x.ptp(), y.ptp()
-    nx, ny = len(x), len(y)
 
-    r = ry / rx
-
-    a = 1/32
-    grids = []
+    cycle_max = max(x.ptp(), y.ptp())
+    cycle = cycle_max
+    grids: list[NDArray[np.float_]] = []
     for _ in range(octaves):
-        a *= 2
 
-        xx = np.linspace(-a+x0, a+x0, nx)
-        yy = np.linspace(-r*a+y0, r*a+y0, ny)
-
-        weight = math.sqrt(psd(2*a/rx))
+        xx = 2*x/cycle
+        yy = 2*y/cycle
+        weight = math.sqrt(psd(1/cycle))
+        weight *= math.sqrt(10*x.ptp()/cycle)  # heuristic ????
+        # print(f"f={1/cycle:6.3f} /m\t{weight=:05.3f}\t({cycle=:7.2f} m)")
 
         grids.append(weight * perlin_grid(xx, yy))
+        cycle /= 2
 
-    return sum(grids, start=np.zeros((len(x), len(x))))
+    return sum(grids, start=np.zeros((len(x), len(y))))
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    a = 2000
+    x = np.linspace(-a/2, a/2, 10000, endpoint=True)
+    y = np.linspace(0, 10, 50, endpoint=True)
+
+    ff = np.logspace(-3, 2)
+
+    def terrain_fft(x: NDArray, y: NDArray, psd) -> tuple[NDArray, NDArray]:
+        n = len(x)
+        z = perlin_multiscale_grid(x, y, octaves=12, psd=psd)
+        f = np.fft.fftfreq(n, x.ptp()/n)[:n//2]
+        dft_z = np.fft.fft(z)[:, :n//2]
+        fz = (2/n * np.abs(dft_z).mean(axis=0))**2
+        return f, fz
+
+    fig, ax = plt.subplots()
+    plotfun = ax.loglog
+    # plotfun = ax.semilogy
+
+    plotfun(*terrain_fft(x, y, surface_psd_rough),
+            'r-', label="rough mare (sim)")
+    plotfun(ff, surface_psd_rough(ff),
+            'k-', label="rough mare")
+
+    plotfun(*terrain_fft(x, y, surface_psd_nominal),
+            'r--', label="rough updland (sim)")
+    plotfun(ff, surface_psd_nominal(ff),
+            'k--', label="rough upland")
+
+    plotfun(*terrain_fft(x, y, surface_psd_smooth),
+            'r-.', label="smooth mare (sim)")
+    plotfun(ff, surface_psd_smooth(ff),
+            'k-.', label="smooth mare")
+
+    ax.set_xlim(1e-2, 1e2)
+    ax.set_xlabel("Frequency [cycles/meter]")
+    ax.set_ylim(1e-4, 1e1)
+    ax.set_ylabel("PSD [meters$^2$/cycles/meter]")
+    ax.set_title("Surface roughness PSD")
+    ax.legend()
+
+    plt.show()

@@ -2,7 +2,10 @@
 import numpy as np
 
 from moon_gen.lib.utils import SurfaceType
-from moon_gen.lib.heightmaps import perlin_multiscale_grid, surface_psd_rough
+from moon_gen.lib.heightmaps import (  # noqa: F401
+    perlin_multiscale_grid,
+    surface_psd_rough, surface_psd_nominal, surface_psd_smooth
+)
 
 __depends__ = [
     "moon_gen.lib.utils",
@@ -16,11 +19,18 @@ def surface(n=513) -> SurfaceType:
     roughly equivalent that that of a rough lunar heighland
     '''
     nx = ny = n
-    ax = ay = n/20
+    ax = ay = 100
 
-    x = np.linspace(-ax/2, ax/2, nx) + np.random.random()
-    y = np.linspace(-ay/2, ay/2, ny) + np.random.random()
+    x = np.linspace(-ax/2, ax/2, nx)
+    y = np.linspace(-ay/2, ay/2, ny)
 
-    z = perlin_multiscale_grid(x, y, octaves=12, psd=surface_psd_rough)
+    z = perlin_multiscale_grid(
+        x + 100*np.random.random(),
+        y + 100*np.random.random(),
+        octaves=12,
+        psd=surface_psd_smooth
+        # psd=surface_psd_nominal
+        # psd=surface_psd_rough
+    )
     print("done")
     return x, y, z

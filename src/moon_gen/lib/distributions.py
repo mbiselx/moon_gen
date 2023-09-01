@@ -5,7 +5,6 @@ This sub-module contains the probabilites and distributions to draw from
 for the different surface generators.
 '''
 
-import random
 import typing
 
 import numpy as np
@@ -15,59 +14,102 @@ from numpy.typing import NDArray
 # LUNAR SURFACE MODELS, Marshall Space Center, p 16
 # https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
 
-DDR = 0.23  # fresh crater : 0.23 - 0.25
+DDR = 0.25  # fresh crater : 0.23 - 0.25
 '''depth-to-diameter ratio'''
-# HDR = 0.06  # fresh crater : 0.022 - 0.06
-HDR = 0.075  # for aesthetics -- less looks bad ???
+HDR = 0.06  # fresh crater : 0.022 - 0.06
+# HDR = 0.075  # for aesthetics -- less looks bad ???
 '''height-to-diameter ratio'''
 
 
-@typing.overload
-def radius_probability(
-    x: float, *,
-    minimum: float = .1,
-    maximum: float = 50
-) -> float:
-    ...
-
-
-@typing.overload
-def radius_probability(
-    x: NDArray[np.float_], *,
-    minimum: float = .1,
-    maximum: float = 50
-) -> NDArray[np.float_]:
-    ...
-
-
-def radius_probability(x, *, minimum: float = .1, maximum: float = 50):
+class PowerDistribution:
     '''
-    for a number between [0 - 1], return a radius, roughly based on
-    LUNAR SURFACE MODELS, Marshall Space Center, p 21
+    roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 21
     https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
-
-    number of fresh craters greater than d per square meter :
-        n = 1/(5*d**2+1)
-    thus, the probablility of a fresh crater having a diameter d or greater
-    will be :
-        p ~ 1/(5*d**2+1)
-    turn this into an inverse CDF to generate a random number:
-        icdf(x) = sqrt((1-x)/(5y))
     '''
-    return np.clip(np.sqrt((1-x)/(50*x)), minimum, maximum)
+
+    def __init__(self, intercept: float, power: float = -2.,
+                 d_min: float = 0.1) -> None:
+        '''
+        Args:
+        * intercept : the intercept of the x=1 axis in the cumulative
+                        distribution chart
+        * power :     the power of the distribution
+        * d_min :     the minimum admissible diameter
+        '''
+        self.intercept = intercept
+        self.power = power
+        self._d_min = d_min
+        self.d_min = d_min
+
+    @property
+    def d_min(self):
+        return self._d_min
+
+    @d_min.setter
+    def d_min(self, value: float):
+        self._d_min = value
+        self._cdf = self.cdf(value)
+
+    @typing.overload
+    def cdf(self, d_min: float) -> float:
+        ...
+
+    @typing.overload
+    def cdf(self, d_min: NDArray) -> NDArray:
+        ...
+
+    def cdf(self, d_min):
+        return self.intercept * d_min**self.power
+
+    @typing.overload
+    def icdf(self, n: float) -> float:
+        ...
+
+    def number(self, x: NDArray, y: NDArray) -> int:
+        '''
+        number of items greater than d_min in a given area, based on cdf
+        '''
+        return int((x.ptp() * y.ptp()) * self._cdf)
+
+    @typing.overload
+    def icdf(self, n: NDArray) -> NDArray:
+        ...
+
+    def icdf(self, n):
+        return (n/self.intercept)**(1/self.power)
+
+    @typing.overload
+    def diameter(self, u: float) -> float:
+        ...
+
+    @typing.overload
+    def diameter(self, u: NDArray) -> NDArray:
+        ...
+
+    def diameter(self, u):
+        '''
+        a diameter, based on the input u, which is between 0 and 1; and the cdf
+        '''
+        return self.icdf(u*self._cdf)
 
 
-def random_radius(*, minimum: float = .1, maximum: float = 50) -> float:
-    '''return a radius using the function `radius_probability`'''
-
-    return radius_probability(
-        random.random(),
-        minimum=minimum,
-        maximum=maximum
-    )
+crater_density_fresh = PowerDistribution(2e-3, -2.)
+crater_density_young = PowerDistribution(2e-2, -2.)
+crater_density_mature = PowerDistribution(1e-1, -2.)
+crater_density_old = PowerDistribution(2e-1, -2.)
 
 
-def surface_psd_nominal(f: float) -> float:
+@typing.overload
+def surface_psd_smooth(f: float) -> float:
+    ...
+
+
+@typing.overload
+def surface_psd_smooth(f: NDArray[np.float_]) -> NDArray[np.float_]:
+    ...
+
+
+def surface_psd_smooth(f):
     '''
     return a surface Power Spectral Density value for a given frequency,
     roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 20
@@ -75,10 +117,41 @@ def surface_psd_nominal(f: float) -> float:
 
     (meters**2/cycles/meter) -> (cycles/meter)
     '''
-    return 3 / (2e5 * f**3.35 + 1)
+    return 5 / (2e6 * f**3.35 + 10)
 
 
+@typing.overload
+def surface_psd_nominal(f: float) -> float:
+    ...
+
+
+@typing.overload
+def surface_psd_nominal(f: NDArray[np.float_]) -> NDArray[np.float_]:
+    ...
+
+
+def surface_psd_nominal(f):
+    '''
+    return a surface Power Spectral Density value for a given frequency,
+    roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 20
+    https://ntrs.nasa.gov/api/citations/19700009596/downloads/19700009596.pdf
+
+    (meters**2/cycles/meter) -> (cycles/meter)
+    '''
+    return 2.5 / (2e5 * f**3.35 + 1)
+
+
+@typing.overload
 def surface_psd_rough(f: float) -> float:
+    ...
+
+
+@typing.overload
+def surface_psd_rough(f: NDArray[np.float_]) -> NDArray[np.float_]:
+    ...
+
+
+def surface_psd_rough(f):
     '''
     return a surface Power Spectral Density value for a given frequency,
     roughly based on LUNAR SURFACE MODELS, Marshall Space Center, p 20
@@ -127,3 +200,39 @@ def cash_norm(x_coord, y_coord, seed: int = 0):
     '''return the output of `cash`, normalized to a range of [0 - 1)'''
     # return (np.cos(cash(x_coord, y_coord, seed=seed)) + 1.)*0.5
     return (cash(x_coord, y_coord, seed=seed)) / 2**63
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    # fig1, ax1 = plt.subplots()
+    # f = np.logspace(-2, 1)
+    # ax1.loglog(f, surface_psd_rough(f), 'k-', label="rough mare")
+    # ax1.loglog(f, surface_psd_nominal(f), 'k--', label="rough upland")
+    # ax1.loglog(f, surface_psd_smooth(f), 'k-.', label="smooth mare")
+    # ax1.set_xlim(1e-2, 1e2)
+    # ax1.set_xlabel("Frequency [cycles/meter]")
+    # ax1.set_ylim(1e-4, 1e1)
+    # ax1.set_ylabel("PSD [meters$^2$/cycles/meter]")
+    # ax1.set_title("Surface roughness PSD")
+    # ax1.legend()
+
+    fig2, ax2 = plt.subplots()
+    d = np.logspace(0, 3)
+    ax2.loglog(d, crater_density_fresh.cdf(d), 'k-',
+               label="fresh (97% original relief)")
+    ax2.loglog(d, crater_density_young.cdf(d), 'k--',
+               label="young (75% original relief)")
+    ax2.loglog(d, crater_density_mature.cdf(d), 'k-.',
+               label="mature (50% original relief)")
+    ax2.loglog(d, crater_density_old.cdf(d), 'k:',
+               label="old (0% original relief)")
+    ax2.set_xlim(1, 1e3)
+    ax2.set_xlabel("Crater Diameter [meter]")
+    ax2.set_ylim(1e-7, 1e-2)
+    ax2.set_ylabel("cumulative density [number/meter**2]")
+    ax2.set_title("Cumulative frequency and relief of craters")
+    ax2.legend()
+    ax2.grid(True, 'both')
+
+    plt.show()

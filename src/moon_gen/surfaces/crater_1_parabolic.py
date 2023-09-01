@@ -1,7 +1,7 @@
 import numpy as np
 
 from moon_gen.lib.utils import SurfaceType
-from moon_gen.lib.craters import make_ejecta, make_excavation
+from moon_gen.lib.craters import make_crater
 
 __depends__ = [
     "moon_gen.lib.utils",
@@ -11,7 +11,7 @@ __depends__ = [
 
 def surface(n=150) -> SurfaceType:
     '''
-    creates a surface with a single simple (hyperbolic) crater
+    creates a surface with a single simple (parabolic) crater
     '''
     nx = ny = n
 
@@ -19,7 +19,6 @@ def surface(n=150) -> SurfaceType:
     center = (0., 0.)
     # scale
     radius = 3
-    print("radius=", radius)
 
     # generate the initial flat terrain
     x = np.linspace(-10, 10, nx)
@@ -27,11 +26,6 @@ def surface(n=150) -> SurfaceType:
     ground = np.zeros((nx, ny))
 
     # apply ejecta to the ground
-    ejecta = make_ejecta(x, y, center, radius)
-    z = ground + ejecta
-
-    # dig the creater
-    crater = make_excavation(x, y, center, radius)
-    z = np.minimum(z, crater)
+    z = make_crater(x, y, ground, radius, center)
 
     return x, y, z
