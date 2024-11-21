@@ -34,8 +34,8 @@ def surface(n=257) -> SurfaceType:
     for _ in range(nb_craters):
         # make the crater
         d = distribution.diameter(np.random.random())
-        center = (x.ptp() * np.random.random() + x.min(),
-                  y.ptp() * np.random.random() + y.min())
+        center = (np.ptp(x) * np.random.random() + x.min(),
+                  np.ptp(y) * np.random.random() + y.min())
         z = make_crater(x, y, z, d/2, center)
         # apply mass wasting
         z = waste_gaussian(z, np.random.random())

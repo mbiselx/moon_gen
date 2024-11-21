@@ -69,7 +69,7 @@ class PowerDistribution:
         '''
         number of items greater than d_min in a given area, based on cdf
         '''
-        return int((x.ptp() * y.ptp()) * self._cdf)
+        return int((np.ptp(x) * np.ptp(y)) * self._cdf)
 
     @typing.overload
     def icdf(self, n: NDArray) -> NDArray:
@@ -105,7 +105,7 @@ def surface_psd_smooth(f: float) -> float:
 
 
 @typing.overload
-def surface_psd_smooth(f: NDArray[np.float_]) -> NDArray[np.float_]:
+def surface_psd_smooth(f: NDArray[np.float64]) -> NDArray[np.float64]:
     ...
 
 
@@ -126,7 +126,7 @@ def surface_psd_nominal(f: float) -> float:
 
 
 @typing.overload
-def surface_psd_nominal(f: NDArray[np.float_]) -> NDArray[np.float_]:
+def surface_psd_nominal(f: NDArray[np.float64]) -> NDArray[np.float64]:
     ...
 
 
@@ -147,7 +147,7 @@ def surface_psd_rough(f: float) -> float:
 
 
 @typing.overload
-def surface_psd_rough(f: NDArray[np.float_]) -> NDArray[np.float_]:
+def surface_psd_rough(f: NDArray[np.float64]) -> NDArray[np.float64]:
     ...
 
 

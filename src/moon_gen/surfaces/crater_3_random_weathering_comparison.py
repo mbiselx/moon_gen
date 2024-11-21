@@ -41,8 +41,8 @@ def surface(n=257) -> SurfaceType:
         for w in reversed(range(epochs)):
             for _ in range(nb_craters//epochs):
                 d = distribution.diameter(np.random.random())
-                center = (x.ptp() * np.random.random() + x.min(),
-                          y.ptp() * np.random.random() + y.min())
+                center = (np.ptp(x) * np.random.random() + x.min(),
+                          np.ptp(y) * np.random.random() + y.min())
                 z[:, y_idx] = make_crater(x, y,
                                           z[:, y_idx], d/2, center)
             z[:, y_idx] = waste_gaussian(z[:, y_idx],
@@ -51,8 +51,8 @@ def surface(n=257) -> SurfaceType:
         # create the last remaining craters unweathered
         for _ in range(nb_craters % epochs):
             d = distribution.diameter(np.random.random())
-            center = (x.ptp() * np.random.random() + x.min(),
-                      y.ptp() * np.random.random() + y.min())
+            center = (np.ptp(x) * np.random.random() + x.min(),
+                      np.ptp(y) * np.random.random() + y.min())
             z[:, y_idx] = make_crater(x, y,
                                       z[:, y_idx], d/2, center)
 

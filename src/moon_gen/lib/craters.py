@@ -19,11 +19,11 @@ from moon_gen.lib.distributions import (  # noqa: F401
 
 
 def crater_2D(
-        r: NDArray[np.float_],
+        r: NDArray[np.float64],
         center: float,
         radius: float,
-        elevation: float | NDArray[np.float_]
-) -> NDArray[np.float_]:
+        elevation: float | NDArray[np.float64]
+) -> NDArray[np.float64]:
     '''the radial shape of an ideal crater'''
     r_square = (r-center)**2
 
@@ -43,12 +43,12 @@ def crater_2D(
 
 
 def make_crater(
-        x: NDArray[np.float_],
-        y: NDArray[np.float_],
-        z: NDArray[np.float_],
+        x: NDArray[np.float64],
+        y: NDArray[np.float64],
+        z: NDArray[np.float64],
         radius: float,
         center: tuple[float, float]
-) -> NDArray[np.float_]:
+) -> NDArray[np.float64]:
     '''
     make a crater in the given `z` surface.
     '''
@@ -73,11 +73,11 @@ def waste_gaussian(
 
 
 def make_procedural_craters(
-        x: NDArray[np.float_],
-        y: NDArray[np.float_],
-        z: NDArray[np.float_],
+        x: NDArray[np.float64],
+        y: NDArray[np.float64],
+        z: NDArray[np.float64],
         thresh: float = .999
-) -> NDArray[np.float_]:
+) -> NDArray[np.float64]:
     # create a grid based on the millimeter point location
     xx, yy = np.meshgrid(x, y, indexing='ij')
     chaos_grid = cash(
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     fresh_crater = crater_2D(r, 0, 1, original_terrain)
 
     weathering_parameter = (0.15, 0.33, 0.66, 1)
-    old_craters = [waste_gaussian(fresh_crater, r.ptp()/len(r), wp)
+    old_craters = [waste_gaussian(fresh_crater, np.ptp(r)/len(r), wp)
                    for wp in weathering_parameter]
 
     fig, ax = plt.subplots()

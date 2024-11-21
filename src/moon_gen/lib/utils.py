@@ -11,8 +11,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 SurfaceType = Union[
-    tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_]],
-    tuple[NDArray[np.float_], NDArray[np.float_], NDArray[np.float_], NDArray],
+    tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]],
+    tuple[NDArray[np.float64], NDArray[np.float64],
+          NDArray[np.float64], NDArray],
 ]
 '''
 a surface defined either as

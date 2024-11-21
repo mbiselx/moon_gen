@@ -267,24 +267,24 @@ class SurfacePlotter(QtWidgets.QFrame):
             self,
             "X range",
             "please input width of heightmap image (in meters)",
-            x.ptp(), 0, 10000
+            np.ptp(x), 0, 10000
         )
         y_range, _ = QtWidgets.QInputDialog.getDouble(
             self,
             "Y range",
             "please input height of heightmap image (in meters)",
-            y.ptp(), 0, 10000
+            np.ptp(y), 0, 10000
         )
         z_range, _ = QtWidgets.QInputDialog.getDouble(
             self,
             "Z range",
             "please input depth of heightmap image (in meters)",
-            z.ptp(), 0, 10000
+            np.ptp(z), 0, 10000
         )
 
         x = np.linspace(-x_range/2, x_range/2, len(x))
         y = np.linspace(-y_range/2, y_range/2, len(y))
-        z *= (z_range/z.ptp())
+        z *= (z_range/np.ptp(z))
 
         self._surfaceData = x, y, z
         self.surf.setData(*self._surfaceData)
@@ -297,7 +297,8 @@ class SurfacePlotter(QtWidgets.QFrame):
             filename, _ = QtWidgets.QFileDialog.getSaveFileName(
                 self,
                 'save heightmap',
-                f'./heightmap_{int(x.ptp())}_{int(y.ptp())}_{z.ptp():.1f}.png',
+                f'./heightmap_{int(np.ptp(x))}'
+                f'_{int(np.ptp(y))}_{np.ptp(z):.1f}.png',
                 'PNG (*.png)'
             )
 
@@ -308,7 +309,7 @@ class SurfacePlotter(QtWidgets.QFrame):
             filename += '.png'
 
         # zz: np.ndarray = (1000*(z - z.min())).astype(np.uint16)
-        zz: np.ndarray = ((z - z.min())*(255/z.ptp())).astype(np.uint8)
+        zz: np.ndarray = ((z - z.min())*(255/np.ptp(z))).astype(np.uint8)
         zz = np.flipud(zz).transpose()
 
         img = QtGui.QImage(

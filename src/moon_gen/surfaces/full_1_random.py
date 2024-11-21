@@ -34,7 +34,7 @@ def parametric_surface(
         psd=psd,
     )
 
-    distribution.d_min = 4*x.ptp()/len(x)
+    distribution.d_min = 4*np.ptp(x)/len(x)
     nb_craters = distribution.number(x, y)
     print(f"generating {nb_craters} craters")
 
@@ -42,21 +42,21 @@ def parametric_surface(
     for w in reversed(range(epochs)):
         for _ in range(nb_craters//epochs):
             d = distribution.diameter(np.random.random())
-            center = (x.ptp() * np.random.random() + x.min(),
-                      y.ptp() * np.random.random() + y.min())
+            center = (np.ptp(x) * np.random.random() + np.min(x),
+                      np.ptp(y) * np.random.random() + np.min(y))
             z = make_crater(x, y, z, d/2, center)
 
         if w > 0:
-            z = waste_gaussian(z, x.ptp()/len(x), w/epochs)
+            z = waste_gaussian(z, np.ptp(x)/len(x), w/epochs)
 
     # apply micro-meteorite impacts
-    z += np.random.normal(scale=2e-2*x.ptp()/len(x), size=z.shape)
+    z += np.random.normal(scale=2e-2*np.ptp(x)/len(x), size=z.shape)
 
     # create the last remaining craters unweathered
     for _ in range(nb_craters % epochs):
         d = distribution.diameter(np.random.random())
-        center = (x.ptp() * np.random.random() + x.min(),
-                  y.ptp() * np.random.random() + y.min())
+        center = (np.ptp(x) * np.random.random() + np.min(x),
+                  np.ptp(y) * np.random.random() + np.min(y))
         z = make_crater(x, y, z, d/2, center)
 
     print("done")

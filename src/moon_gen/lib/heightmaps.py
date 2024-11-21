@@ -83,8 +83,8 @@ def _perlin_grid(x: NDArray, y: NDArray) -> NDArray:
     return z
 
 
-def perlin_grid(x: NDArray[np.float_],
-                y: NDArray[np.float_]) -> NDArray[np.float_]:
+def perlin_grid(x: NDArray[np.float64],
+                y: NDArray[np.float64]) -> NDArray[np.float64]:
     '''
     generate a perlin noise grid using numpy.
     Fast-ish, but consumes a lot of memory.
@@ -115,11 +115,11 @@ def perlin_grid(x: NDArray[np.float_],
 
 
 def perlin_multiscale_grid(
-        x: NDArray[np.float_],
-        y: NDArray[np.float_],
+        x: NDArray[np.float64],
+        y: NDArray[np.float64],
         octaves: int = 8,
         psd: typing.Callable[[float], float] = surface_psd_rough
-) -> NDArray[np.float_]:
+) -> NDArray[np.float64]:
     '''
     generate multiscale perlin noise with a given power spectral density
     the DC component (zero-frequency) is ignored.
@@ -130,15 +130,15 @@ def perlin_multiscale_grid(
         psd :   desired power spectral density function
     '''
 
-    cycle_max = max(x.ptp(), y.ptp())
+    cycle_max = max(np.ptp(x), np.ptp(y))
     cycle = cycle_max
-    grids: list[NDArray[np.float_]] = []
+    grids: list[NDArray[np.float64]] = []
     for _ in range(octaves):
 
         xx = 2*x/cycle
         yy = 2*y/cycle
         weight = math.sqrt(psd(1/cycle))
-        weight *= math.sqrt(10*x.ptp()/cycle)  # heuristic ????
+        weight *= math.sqrt(10*np.ptp(x)/cycle)  # heuristic ????
         # print(f"f={1/cycle:6.3f} /m\t{weight=:05.3f}\t({cycle=:7.2f} m)")
 
         grids.append(weight * perlin_grid(xx, yy))
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     def terrain_fft(x: NDArray, y: NDArray, psd) -> tuple[NDArray, NDArray]:
         n = len(x)
         z = perlin_multiscale_grid(x, y, octaves=12, psd=psd)
-        f = np.fft.fftfreq(n, x.ptp()/n)[:n//2]
+        f = np.fft.fftfreq(n, np.ptp(x)/n)[:n//2]
         dft_z = np.fft.fft(z)[:, :n//2]
         fz = (2/n * np.abs(dft_z).mean(axis=0))**2
         return f, fz
